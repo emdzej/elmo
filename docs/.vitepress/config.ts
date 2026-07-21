@@ -45,8 +45,11 @@ export default defineConfig({
       md.renderer.rules.fence = (tokens, idx, opts, env, self) => {
         const token = tokens[idx];
         if ((token?.info ?? "").trim().split(/\s+/)[0] === "elmo") {
-          // inert script keeps the source out of Vue/HTML parsing
-          return `<div class="elmo-diagram"><script type="application/elmo">${token.content}</script></div>\n`;
+          // Base64 the source into a data attribute — its charset (A-Za-z0-9+/=)
+          // survives VitePress/Vue HTML escaping intact, unlike raw quotes/angle
+          // brackets which get entity-encoded. The theme decodes and renders it.
+          const b64 = Buffer.from(token.content, "utf8").toString("base64");
+          return `<div class="elmo-diagram" data-elmo-src="${b64}"></div>\n`;
         }
         return fence(tokens, idx, opts, env, self);
       };

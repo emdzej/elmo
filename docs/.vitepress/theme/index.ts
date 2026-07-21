@@ -3,18 +3,25 @@ import type { Theme } from "vitepress";
 import { render } from "@emdzej/elmo-core";
 import "./elmo.css";
 
-// Render every elmo block (an inert <script type="application/elmo">) to SVG in
-// the browser. Runs after each route change; each block renders once.
+// Decode a UTF-8 base64 string in the browser.
+function decodeB64(b64: string): string {
+  const bin = atob(b64);
+  const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+// Render every elmo block (a <div class="elmo-diagram" data-elmo-src="…base64…">)
+// to SVG in the browser. Runs after each route change; each block renders once.
 async function renderElmoBlocks(): Promise<void> {
   if (typeof document === "undefined") return;
-  const scripts = Array.from(document.querySelectorAll<HTMLScriptElement>('script[type="application/elmo"]'));
+  const hosts = Array.from(document.querySelectorAll<HTMLElement>(".elmo-diagram[data-elmo-src]"));
   await Promise.all(
-    scripts.map(async (script) => {
-      const host = script.parentElement;
-      if (!host || host.getAttribute("data-elmo-done") === "1") return;
+    hosts.map(async (host) => {
+      if (host.getAttribute("data-elmo-done") === "1") return;
       host.setAttribute("data-elmo-done", "1");
       try {
-        const { svg } = await render(script.textContent ?? "");
+        const source = decodeB64(host.getAttribute("data-elmo-src") ?? "");
+        const { svg } = await render(source);
         host.innerHTML = svg;
       } catch (err) {
         const pre = document.createElement("pre");

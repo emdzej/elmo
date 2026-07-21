@@ -30,6 +30,12 @@ describe("render", () => {
     await expect(render("part R1 res 10k\nnet x = R1.1 U9.2")).rejects.toThrow(/unknown component 'U9'/);
   });
 
+  it("warns on an unknown kind (typo'd or out-of-scope template)", () => {
+    const { schematic } = parse('part U5 NE555 show="TRIG OUT"'); // no def NE555 in scope
+    const warnings = validate(schematic).filter((d) => d.message.includes("unknown kind"));
+    expect(warnings.some((w) => w.message.includes("NE555"))).toBe(true);
+  });
+
   it("warns on a single-member net", () => {
     const { schematic } = parse("part R1 res 10k\nnet lonely = R1.1");
     const warnings = validate(schematic).filter((d) => d.severity === "warning");

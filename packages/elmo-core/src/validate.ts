@@ -4,6 +4,7 @@
 
 import type { Component, Diagnostic, Pin, Schematic } from "./types.js";
 import { connectedPinIds, keptDespiteHidden } from "./pins.js";
+import { KINDS, resolveKind } from "./kinds.js";
 
 function matchPin(comp: Component, token: string): Pin[] {
   const exact = comp.pins.filter(
@@ -59,6 +60,16 @@ export function validate(schematic: Schematic): Diagnostic[] {
       diags.push({
         severity: "warning",
         message: `component '${comp.ref}' is not connected to any net`,
+        line: 0,
+        col: 0,
+      });
+    }
+    // by now template instances are resolved to a base kind; anything not a
+    // built-in is an unknown kind or an out-of-scope/typo'd template
+    if (!(resolveKind(comp.kind) in KINDS)) {
+      diags.push({
+        severity: "warning",
+        message: `component '${comp.ref}': unknown kind '${comp.kind}' — rendered as a plain box (missing a def or import?)`,
         line: 0,
         col: 0,
       });

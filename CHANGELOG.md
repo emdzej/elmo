@@ -17,6 +17,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Layout reserves the correct label space per component, so labels of packed
   (disconnected) parts no longer overlap the row above.
+- The validator now warns on an unknown kind (a typo'd or out-of-scope template
+  that would otherwise render silently as an empty box).
 
 ### Changed
 

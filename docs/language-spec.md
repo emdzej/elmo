@@ -179,6 +179,12 @@ A template can declare a component's full pinout while an instance draws only th
 pins it uses, via the `show=`/`hide=` attributes (§7.1):
 
 ```elmo
+def NE555 ic pkg=DIP-8 {
+  left  2:TRIG  6:THRES  7:DISCH
+  right 3:OUT   4:~RESET
+  top   8:VCC
+  bottom 1:GND
+}
 part U5 NE555 show="TRIG THRES OUT GND"   # draw only these four
 part U6 NE555 hide="~RESET"               # draw all but ~RESET
 ```

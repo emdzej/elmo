@@ -4,6 +4,15 @@ All notable changes to elmo are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-07-21
+
+### Fixed
+
+- The validator now warns on an unknown kind (a typo'd or out-of-scope template
+  that would otherwise render silently as an empty box).
+- Docs: the `show`/`hide` spec example is self-contained (it was missing its
+  `def`, so it rendered as empty boxes).
+
 ## [0.3.0] - 2026-07-21
 
 ### Added
@@ -17,8 +26,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Layout reserves the correct label space per component, so labels of packed
   (disconnected) parts no longer overlap the row above.
-- The validator now warns on an unknown kind (a typo'd or out-of-scope template
-  that would otherwise render silently as an empty box).
 
 ### Changed
 
@@ -84,6 +91,7 @@ DSL that renders circuits as schematics, embeddable in Markdown.
   - VitePress documentation site with live in-browser diagrams.
   - GitHub Actions: CI, npm trusted publishing on release, and Pages deploy.
 
+[0.3.1]: https://github.com/emdzej/elmo/releases/tag/0.3.1
 [0.3.0]: https://github.com/emdzej/elmo/releases/tag/0.3.0
 [0.2.0]: https://github.com/emdzej/elmo/releases/tag/0.2.0
 [0.1.0]: https://github.com/emdzej/elmo/releases/tag/0.1.0

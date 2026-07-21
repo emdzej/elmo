@@ -1,6 +1,6 @@
 {
   "name": "@emdzej/elmo-cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "elmo command-line — render schematics, netlists and BOMs from .elmo files",
   "type": "module",
   "bin": {

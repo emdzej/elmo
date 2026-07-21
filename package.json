@@ -1,6 +1,6 @@
 {
   "name": "elmo",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Electronics markup language — text DSL that renders as schematics, embeddable in Markdown",
   "type": "module",

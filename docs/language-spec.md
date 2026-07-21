@@ -151,7 +151,7 @@ Four ways to express connectivity. **The power/gnd distinction is semantic, not 
 
 ### 5.1 Signal nets (routed, labeled)
 
-```elmo
+```elmo-src
 net TX = U1.TX J1.RX
 net SPI_MOSI = U1.PB3 U4.SDI U5.SDI
 ```
@@ -162,14 +162,14 @@ rendered as **net labels** — a named tag at each member pin, no copper drawn. 
 threshold is configurable with `set labelThreshold=N` (§7) or
 `render(src, { labelThreshold })`. Override per net:
 
-```elmo
+```elmo-src
 net BUS = U1.D0 U2.D0 U3.D0  as=wire     # force routed wire despite fan-out
 net TX  = U1.TX J1.RX        as=label    # force a label despite low fan-out
 ```
 
 ### 5.2 Power nets (rendered as power symbols)
 
-```elmo
+```elmo-src
 power VCC = U1.VCC U1.AVCC J1.VCC R1.1
 power 3V3 = U6.VDD
 ```
@@ -179,7 +179,7 @@ single most important rendering rule — it keeps schematics legible.
 
 ### 5.3 Ground nets (rendered as ground symbols)
 
-```elmo
+```elmo-src
 gnd GND = U1.8 U1.22 J1.GND C1.2
 gnd AGND sym=analog = U3.V- C5.2      # alternate ground symbol
 ```
@@ -188,7 +188,7 @@ Each member gets a ground symbol. Not routed.
 
 ### 5.4 Point-to-point wires
 
-```elmo
+```elmo-src
 wire U1.RX -- J1.TX      # neutral connection
 wire U1.TX -> J1.RX      # same, plus a signal-flow hint to the router
 ```
@@ -208,7 +208,7 @@ referenced by number.
 Net names are **global**: the same name in two statements refers to **one** net
 (KiCad semantics). This makes rails composable across a file —
 
-```elmo
+```elmo-src
 power VCC = U1.VCC
 power VCC = U2.VCC       # merges into the single VCC net
 ```

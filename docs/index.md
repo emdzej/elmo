@@ -4,6 +4,9 @@ hero:
   name: elmo
   text: Schematics as code
   tagline: ELectronics MOdeling — a text DSL that renders as schematics, embeddable in Markdown.
+  image:
+    src: /elmo-icon.svg
+    alt: elmo
   actions:
     - theme: brand
       text: Get started

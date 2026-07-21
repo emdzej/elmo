@@ -52,12 +52,20 @@ mirror U3
 ## Reuse across files
 
 `import` pulls another file's declarations in; `as` puts them in a namespace
-(rails like `power`/`gnd` still merge with the parent):
+(rails like `power`/`gnd` still merge with the parent). Given a `psu.elmo`:
+
+```elmo-file psu.elmo
+part U1 ic "REG" { left 1:IN right 2:OUT bottom 3:GND }
+gnd GND = U1.GND
+```
+
+another file imports it and wires across the namespace:
 
 ```elmo
 import "psu.elmo" as psu
 part U2 mod "ESP32-WROOM" { left 1:GND 2:3V3 }
 wire psu.U1.OUT -- U2.3V3
+gnd GND = psu.U1.GND U2.GND
 ```
 
 See [How-to → split a design across files](/guide/how-to#split-a-design-across-files)

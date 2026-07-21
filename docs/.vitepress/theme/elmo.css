@@ -1,3 +1,28 @@
+/* Site palette inspired by the elmo mascot: furry red + orange nose. */
+:root {
+  --vp-c-brand-1: #d0362a;
+  --vp-c-brand-2: #e23b2e;
+  --vp-c-brand-3: #ef4a3c;
+  --vp-c-brand-soft: rgba(226, 59, 46, 0.14);
+  --vp-c-brand-softer: rgba(226, 59, 46, 0.08);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #e23b2e 30%, #f5821f);
+  --vp-home-hero-image-background-image: linear-gradient(120deg, rgba(226, 59, 46, 0.28), rgba(245, 130, 31, 0.28));
+  --vp-home-hero-image-filter: blur(44px);
+
+  --vp-button-brand-bg: #e23b2e;
+  --vp-button-brand-hover-bg: #ef4a3c;
+  --vp-button-brand-active-bg: #d0362a;
+}
+.dark {
+  --vp-c-brand-1: #ff6a5c;
+  --vp-c-brand-2: #f5544a;
+  --vp-c-brand-3: #e23b2e;
+  --vp-c-brand-soft: rgba(255, 106, 92, 0.16);
+  --vp-c-brand-softer: rgba(255, 106, 92, 0.1);
+}
+
 /* A source + rendered-diagram pair, read as one unit. */
 .elmo-example {
   margin: 1.2rem 0;
@@ -14,12 +39,12 @@
   border-bottom: 1px solid var(--vp-c-divider);
 }
 .elmo-example .elmo-source::before {
-  content: "elmo";
+  content: attr(data-elmo-label);
   display: block;
   padding: 0.35rem 0.9rem;
   font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-family: var(--vp-font-family-mono);
   color: var(--vp-c-text-3);
   background: var(--vp-c-bg-alt);
 }

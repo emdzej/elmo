@@ -60,16 +60,14 @@ net D0 = U1.D0 U2.D0
 Use `import` to reuse subcircuits. A named import puts everything in a namespace;
 rails (`power`/`gnd`) still merge with the parent.
 
-`psu.elmo`:
-
-```elmo
+```elmo-file psu.elmo
 part U1 ic "AMS1117-3.3" pkg=SOT-223 { left 3:IN right 2:OUT bottom 1:GND }
 part C1 cap 10u
 net vout = U1.OUT C1.1
 gnd GND = U1.GND C1.2
 ```
 
-`board.elmo`:
+`board.elmo` imports it:
 
 ```elmo
 import "psu.elmo" as psu

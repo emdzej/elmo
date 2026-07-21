@@ -1,0 +1,50 @@
+title "elmo symbol gallery"
+
+part R1 res 10k
+part RV1 pot 10k
+part RH1 rheostat 1k
+part TH1 thermistor ntc
+part MOV1 varistor 14V
+part C1 cap 100n
+part C2 cap 10u pol=yes
+part L1 ind 4u7
+part FB1 ferrite
+part F1 fuse 500mA
+part Y1 crystal 16MHz
+part TR1 transformer
+
+part D1 diode 1N4148
+part D2 led red
+part D3 zener 5V1
+part D4 schottky BAT54
+part D5 tvs SMAJ5
+part D6 photodiode
+part D7 varactor
+part BR1 bridge
+
+part Q1 npn 2N3904
+part Q2 pnp 2N3906
+part Q3 darlington TIP120
+part Q4 phototransistor
+part Q5 igbt
+part M1 nmos 2N7000
+part M2 pmos
+part M3 nmos_dep
+part J1 njfet J201
+part J2 pjfet
+
+part U1 opamp LM358
+part V1 vsource 5V
+part I1 isource 1mA
+part AC1 acsource 230V
+part BT1 battery 3V6
+part LP1 lamp
+part MOT1 motor
+part SPK1 speaker
+part BZ1 buzzer
+
+part SW1 switch_spst
+part SW2 switch_spdt
+part PB1 pushbutton
+part K1 relay
+part ANT1 antenna

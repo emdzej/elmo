@@ -1,0 +1,19 @@
+.elmo-diagram {
+  margin: 1.2rem 0;
+  padding: 1rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  overflow-x: auto;
+  background: var(--vp-c-bg-soft);
+}
+.elmo-diagram svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+.elmo-diagram-error {
+  color: var(--vp-c-danger-1);
+  font-size: 0.85em;
+  white-space: pre-wrap;
+}

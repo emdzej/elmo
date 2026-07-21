@@ -1,0 +1,5 @@
+{
+  // Files to lint and to skip. Rule config lives in .markdownlint.jsonc.
+  "globs": ["**/*.md"],
+  "ignores": ["**/node_modules/**", "**/dist/**", "**/.vitepress/cache/**", "**/.vitepress/dist/**"]
+}

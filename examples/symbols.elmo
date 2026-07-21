@@ -1,0 +1,20 @@
+title "M2 symbol showcase"
+
+part R1 res 10k
+part C1 cap 100n
+part C2 cap 10u pol=yes
+part L1 ind 4u7
+part D1 diode 1N4148
+part D2 led red
+part Q1 npn 2N3904
+part Q2 pnp 2N3906
+part M1 nmos 2N7000
+part U1 opamp "LM358"
+
+net a = R1.2 C1.1
+net b = C2.+ L1.1
+net c = D1.cathode D2.anode
+net d = Q1.C Q2.E
+net e = M1.D U1.out
+gnd GND = R1.1 C1.2 U1.V-
+power VCC = U1.V+

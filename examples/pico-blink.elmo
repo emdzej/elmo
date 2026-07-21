@@ -1,0 +1,14 @@
+title "Pi Pico blink"
+
+part U1 mod "Raspberry Pi Pico" pkg=module {
+  left  1:GP0  2:GP1  3:GND  4:GP2  5:GP3
+  right 40:VBUS 39:VSYS 38:GND 36:3V3 34:GP28
+}
+part R1 res 330
+part D1 led green
+part J1 connector "SWD" pkg=header-1x3 { 1:SWDIO 2:GND 3:SWCLK }
+
+wire U1.GP2 -- R1.1
+wire R1.2 -- D1.anode
+power VBUS = U1.VBUS
+gnd GND = U1.3 D1.cathode J1.GND

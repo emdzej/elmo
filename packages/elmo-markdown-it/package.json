@@ -1,0 +1,49 @@
+{
+  "name": "@emdzej/elmo-markdown-it",
+  "version": "0.1.0",
+  "description": "markdown-it plugin that renders ```elmo fenced blocks as SVG schematics",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@emdzej/elmo-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "markdown-it": ">=13"
+  },
+  "devDependencies": {
+    "markdown-it": "^14.1.0",
+    "@types/markdown-it": "^14.1.2"
+  },
+  "keywords": [
+    "markdown-it",
+    "markdown-it-plugin",
+    "elmo",
+    "schematic",
+    "svg"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emdzej/elmo.git",
+    "directory": "packages/elmo-markdown-it"
+  },
+  "homepage": "https://elmo.emdzej.pl",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

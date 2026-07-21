@@ -1,0 +1,12 @@
+title "RC low-pass + buffer"
+part J1 connector "IN" { 1:SIG 2:GND }
+part R1 res 10k
+part C1 cap 100n
+part U1 opamp "LM358"
+part J2 connector "OUT" { 1:SIG 2:GND }
+wire J1.SIG -- R1.1
+wire R1.2 -- U1.+
+wire C1.1 -- R1.2
+wire U1.out -- J2.SIG
+power VCC = U1.V+
+gnd GND = J1.GND C1.2 U1.V- J2.GND

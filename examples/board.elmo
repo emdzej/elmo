@@ -1,0 +1,8 @@
+title "board with imported PSU"
+import "lib-psu.elmo" as psu
+part U2 mod "ESP32-WROOM" { left 1:GND 2:3V3 right 38:EN }
+part R1 res 10k
+wire psu.U1.OUT -- U2.3V3
+wire U2.EN -- R1.1
+power VIN = psu.U1.IN
+gnd GND = psu.U1.GND U2.GND

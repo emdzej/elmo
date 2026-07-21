@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>elmo browser demo</title>
+    <style>
+      body { font: 16px system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+      .elmo-diagram svg { max-width: 100%; height: auto; }
+      pre.elmo { display: none; } /* hide the source once rendered it is replaced */
+    </style>
+  </head>
+  <body>
+    <h1>elmo — client-side rendering</h1>
+    <p>The <code>&lt;pre class="elmo"&gt;</code> block below is rendered in the browser by <code>elmo.min.js</code>.</p>
+
+    <pre class="elmo">
+title "555 astable"
+part U1 ic "NE555" pkg=DIP-8 {
+  left  2:TRIG  6:THRES  7:DISCH
+  right 3:OUT   4:~RESET
+  top   8:VCC
+  bottom 1:GND
+}
+part R1 res 10k
+part R2 res 47k
+part C1 cap 10n
+power VCC = U1.VCC U1.~RESET R1.1
+gnd   GND = U1.GND C1.2
+net disch  = U1.DISCH R1.2 R2.1        as=wire
+net timing = U1.THRES U1.TRIG R2.2 C1.1 as=wire
+    </pre>
+
+    <h2>Imports</h2>
+    <p>
+      Define reusable library files inline with
+      <code>&lt;script type="text/elmo-file" data-path="…"&gt;</code>, then
+      <code>import</code> them from any block.
+    </p>
+
+    <script type="text/elmo-file" data-path="psu.elmo">
+part U1 ic "AMS1117-3.3" pkg=SOT-223 { left 3:IN right 2:OUT bottom 1:GND }
+part C1 cap 10u
+net vout = U1.OUT C1.1
+gnd GND = U1.GND C1.2
+    </script>
+
+    <pre class="elmo">
+title "board"
+import "psu.elmo" as psu
+part U2 mod "ESP32-WROOM" { left 1:GND 2:3V3 }
+wire psu.U1.OUT -- U2.3V3
+gnd GND = psu.U1.GND U2.GND
+    </pre>
+
+    <!-- built by `pnpm -F @emdzej/elmo-browser build` -->
+    <script src="../packages/elmo-browser/dist/elmo.min.js"></script>
+  </body>
+</html>

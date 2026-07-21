@@ -1,0 +1,42 @@
+{
+  "name": "@emdzej/elmo-core",
+  "version": "0.1.0",
+  "description": "elmo core — parse the elmo DSL and render circuit schematics as SVG",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "keywords": [
+    "electronics",
+    "schematic",
+    "dsl",
+    "svg",
+    "eda"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "elkjs": "^0.12.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emdzej/elmo.git",
+    "directory": "packages/elmo-core"
+  },
+  "homepage": "https://elmo.emdzej.pl",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

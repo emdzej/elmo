@@ -1,0 +1,36 @@
+{
+  "name": "@emdzej/elmo-browser",
+  "version": "0.1.0",
+  "description": "Client-side elmo — renders elmo blocks on a page (Mermaid-style)",
+  "type": "module",
+  "main": "./dist/elmo.min.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=iife --global-name=elmo --minify --platform=browser --outfile=dist/elmo.min.js"
+  },
+  "dependencies": {
+    "@emdzej/elmo-core": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.5"
+  },
+  "keywords": [
+    "elmo",
+    "schematic",
+    "svg",
+    "browser"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emdzej/elmo.git",
+    "directory": "packages/elmo-browser"
+  },
+  "homepage": "https://elmo.emdzej.pl",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

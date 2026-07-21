@@ -1,0 +1,48 @@
+{
+  "name": "@emdzej/elmo-remark",
+  "version": "0.1.0",
+  "description": "remark (unified) plugin that renders ```elmo fenced blocks as SVG schematics",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@emdzej/elmo-core": "workspace:*",
+    "unist-util-visit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/mdast": "^4.0.4"
+  },
+  "keywords": [
+    "remark",
+    "remark-plugin",
+    "unified",
+    "mdx",
+    "elmo",
+    "schematic",
+    "svg"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emdzej/elmo.git",
+    "directory": "packages/elmo-remark"
+  },
+  "homepage": "https://elmo.emdzej.pl",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

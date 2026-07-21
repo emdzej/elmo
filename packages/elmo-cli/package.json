@@ -1,0 +1,41 @@
+{
+  "name": "@emdzej/elmo-cli",
+  "version": "0.1.0",
+  "description": "elmo command-line — render schematics, netlists and BOMs from .elmo files",
+  "type": "module",
+  "bin": {
+    "elmo": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@emdzej/elmo-core": "workspace:*",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  },
+  "keywords": [
+    "elmo",
+    "schematic",
+    "cli",
+    "netlist",
+    "bom"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emdzej/elmo.git",
+    "directory": "packages/elmo-cli"
+  },
+  "homepage": "https://elmo.emdzej.pl",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

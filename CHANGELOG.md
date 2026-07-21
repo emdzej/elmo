@@ -13,6 +13,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the template's pins and attrs, default their label to the template name, allow
   per-instance attr/label overrides, and are shareable across files via imports
   (`import … as lib` → `part U1 lib.NE555`).
+- **Per-instance pin visibility**: `show="…"` / `hide="…"` draw only (or all but)
+  the listed pins — trim a large template to the pins in use. Wired pins are
+  always kept; hidden pins stay in the IR so netlist/BOM are unaffected.
 
 ### Docs
 

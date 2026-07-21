@@ -175,6 +175,14 @@ part U4 NE555 "555 timer"   # override the label
   With `import … as lib`, reference the template as `lib.NE555`. Rails and
   namespacing follow §3.1.
 
+A template can declare a component's full pinout while an instance draws only the
+pins it uses, via the `show=`/`hide=` attributes (§7.1):
+
+```elmo
+part U5 NE555 show="TRIG THRES OUT GND"   # draw only these four
+part U6 NE555 hide="~RESET"               # draw all but ~RESET
+```
+
 Deferred to a later version: template inheritance (a `def` based on another `def`)
 and per-instance pin/side overrides.
 
@@ -290,9 +298,14 @@ A few attribute keys are read by the pipeline rather than passed through:
 | Attribute | Effect |
 | --- | --- |
 | `link="uri"` | Renders the component's ref (e.g. `U1`) as a hyperlink to `uri` — a datasheet, BOM entry, or wiki page. Wherever a renderer supports links (SVG `<a>`), the ref becomes clickable. |
+| `show="p1 p2 …"` | Draw **only** these pins on this instance (by number or name). Best for trimming a large template to the few pins in use. |
+| `hide="p1 p2 …"` | Draw all pins **except** these. A pin referenced by a net is kept regardless (with a warning), so a wire never dangles. |
 | `pol=yes` | On a `cap`, selects the polarized capacitor symbol. |
 | `sym=...` | On a `gnd` net, selects an alternate ground symbol (e.g. `sym=analog`). |
 | `as=wire\|label` | On a `net`, forces routed wire or net labels regardless of fan-out (§5.1). |
+
+`show`/`hide` affect the **drawing only** — hidden pins stay in the IR, so the
+netlist and BOM are unchanged.
 
 ```elmo
 part U1 ic "ATmega328P" pkg=DIP-28 link="https://ww1.microchip.com/…/ATmega328P.pdf" {

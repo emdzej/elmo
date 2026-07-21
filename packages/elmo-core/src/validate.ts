@@ -3,6 +3,7 @@
 // diagnostics report line 0 for M1 (precise spans arrive with M4 error work).
 
 import type { Component, Diagnostic, Pin, Schematic } from "./types.js";
+import { connectedPinIds, keptDespiteHidden } from "./pins.js";
 
 function matchPin(comp: Component, token: string): Pin[] {
   const exact = comp.pins.filter(
@@ -58,6 +59,19 @@ export function validate(schematic: Schematic): Diagnostic[] {
       diags.push({
         severity: "warning",
         message: `component '${comp.ref}' is not connected to any net`,
+        line: 0,
+        col: 0,
+      });
+    }
+  }
+
+  // pins that show=/hide= tried to hide but are kept because they are wired
+  const connected = connectedPinIds(schematic);
+  for (const comp of schematic.components) {
+    for (const pin of keptDespiteHidden(comp, connected.get(comp.ref) ?? new Set())) {
+      diags.push({
+        severity: "warning",
+        message: `pin '${pin.name}' on '${comp.ref}' is used by a net — not hidden`,
         line: 0,
         col: 0,
       });

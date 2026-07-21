@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { parse, render, mapResolver } from "../src/index.js";
+import { parse, render, mapResolver, layoutSchematic, validate } from "../src/index.js";
+
+const MCU = `def MCU ic { left 1:PA0 2:PA1 3:PA2 right 4:PB0 5:PB1 top 6:VCC bottom 7:GND }`;
+async function shownPins(src: string, ref: string): Promise<string[]> {
+  const { layout } = await layoutSchematic(parse(src).schematic);
+  return layout.byRef.get(ref)!.pins.map((p) => p.pin.name).sort();
+}
 
 const LIB = `
 def NE555 ic pkg=DIP-8 {
@@ -54,5 +60,33 @@ describe("part templates (def)", () => {
     const { svg } = await render(`${LIB}\npart U1 NE555\npart R1 res 1k\nnet n = U1.OUT R1.1`);
     expect(svg).not.toContain("NaN");
     expect(svg).toContain("NE555");
+  });
+});
+
+describe("pin visibility (show / hide)", () => {
+  it("draws all pins by default", async () => {
+    expect(await shownPins(`${MCU}\npart U1 MCU`, "U1")).toEqual(["GND", "PA0", "PA1", "PA2", "PB0", "PB1", "VCC"]);
+  });
+
+  it("show= renders only the listed pins", async () => {
+    expect(await shownPins(`${MCU}\npart U1 MCU show="PA0 VCC GND"`, "U1")).toEqual(["GND", "PA0", "VCC"]);
+  });
+
+  it("hide= drops the listed pins", async () => {
+    expect(await shownPins(`${MCU}\npart U1 MCU hide="PA1 PA2 PB1"`, "U1")).toEqual(["GND", "PA0", "PB0", "VCC"]);
+  });
+
+  it("never hides a wired pin, and warns", async () => {
+    const src = `${MCU}\npart U1 MCU hide="PA0 VCC"\npart R1 res 1k\nwire U1.PA0 -- R1.1`;
+    const shown = await shownPins(src, "U1");
+    expect(shown).toContain("PA0"); // kept: it's wired
+    expect(shown).not.toContain("VCC"); // hidden: not wired
+    const warnings = validate(parse(src).schematic).filter((d) => d.message.includes("not hidden"));
+    expect(warnings.some((w) => w.message.includes("PA0"))).toBe(true);
+  });
+
+  it("keeps hidden pins in the IR (netlist/BOM unaffected)", () => {
+    const { schematic } = parse(`${MCU}\npart U1 MCU show="PA0"`);
+    expect(schematic.components.find((c) => c.ref === "U1")!.pins).toHaveLength(7);
   });
 });

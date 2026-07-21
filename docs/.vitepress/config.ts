@@ -39,17 +39,20 @@ export default defineConfig({
     search: { provider: "local" },
   },
   markdown: {
-    languageAlias: { elmo: "text" },
     config(md) {
       const fence = md.renderer.rules.fence!;
       md.renderer.rules.fence = (tokens, idx, opts, env, self) => {
         const token = tokens[idx];
-        if ((token?.info ?? "").trim().split(/\s+/)[0] === "elmo") {
+        if (token && (token.info ?? "").trim().split(/\s+/)[0] === "elmo") {
           // Base64 the source into a data attribute — its charset (A-Za-z0-9+/=)
           // survives VitePress/Vue HTML escaping intact, unlike raw quotes/angle
           // brackets which get entity-encoded. The theme decodes and renders it.
           const b64 = Buffer.from(token.content, "utf8").toString("base64");
-          return `<div class="elmo-diagram" data-elmo-src="${b64}"></div>\n`;
+          // highlight the source as plain text (shiki has no `elmo` grammar)
+          token.info = "text";
+          const source = fence(tokens, idx, opts, env, self);
+          token.info = "elmo";
+          return `<div class="elmo-example"><div class="elmo-source">${source}</div><div class="elmo-diagram" data-elmo-src="${b64}"></div></div>\n`;
         }
         return fence(tokens, idx, opts, env, self);
       };

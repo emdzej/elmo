@@ -1,8 +1,31 @@
-.elmo-diagram {
+/* A source + rendered-diagram pair, read as one unit. */
+.elmo-example {
   margin: 1.2rem 0;
-  padding: 1rem;
   border: 1px solid var(--vp-c-divider);
   border-radius: 10px;
+  overflow: hidden;
+}
+/* the highlighted source, on top */
+.elmo-example .elmo-source div[class*="language-"] {
+  margin: 0;
+  border-radius: 0;
+}
+.elmo-example .elmo-source {
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+.elmo-example .elmo-source::before {
+  content: "elmo";
+  display: block;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-3);
+  background: var(--vp-c-bg-alt);
+}
+/* the rendered diagram, below */
+.elmo-diagram {
+  padding: 1rem;
   overflow-x: auto;
   background: var(--vp-c-bg-soft);
 }
@@ -16,4 +39,11 @@
   color: var(--vp-c-danger-1);
   font-size: 0.85em;
   white-space: pre-wrap;
+}
+
+/* standalone diagram (browser bundle / non-VitePress) keeps its own frame */
+.elmo-diagram:only-child {
+  margin: 1.2rem 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
 }

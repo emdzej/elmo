@@ -1,6 +1,6 @@
 {
   "name": "@emdzej/elmo-remark",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "remark (unified) plugin that renders ```elmo fenced blocks as SVG schematics",
   "type": "module",
   "main": "./dist/index.js",

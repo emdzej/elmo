@@ -1,6 +1,6 @@
 {
   "name": "@emdzej/elmo-browser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Client-side elmo — renders elmo blocks on a page (Mermaid-style)",
   "type": "module",
   "main": "./dist/elmo.min.js",

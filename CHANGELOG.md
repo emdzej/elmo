@@ -4,6 +4,22 @@ All notable changes to elmo are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-07-21
+
+### Added
+
+- **Reusable part templates** (`@emdzej/elmo-core`): `def <name> <kind> …`
+  defines a pinout once; instantiate it as `part <ref> <name>`. Instances inherit
+  the template's pins and attrs, default their label to the template name, allow
+  per-instance attr/label overrides, and are shareable across files via imports
+  (`import … as lib` → `part U1 lib.NE555`).
+
+### Docs
+
+- Interactive in-browser playground on the home page, an elmo mascot icon and
+  matching red/orange theme, and each documentation example now shows its source
+  alongside the rendered diagram (with reliable, escaping-proof rendering).
+
 ## [0.1.0] - 2026-07-20
 
 First public release. elmo (ELectronics MOdeling, Schematics as a code) is a text
@@ -21,9 +37,6 @@ DSL that renders circuits as schematics, embeddable in Markdown.
   - `import "file" [as ns]` — split designs across files; namespaces prefix refs
     and signal nets while power/ground rails stay global; transitive imports are
     flattened, re-declarations are last-wins with a warning, cycles are broken.
-  - `def <name> <kind> …` — reusable part templates instantiated as
-    `part <ref> <name>`; inherit pins/attrs, default the label to the template
-    name, override attrs per instance, and share across files via imports.
   - Shared-pin connectivity merge so tee'd wires form one electrical net.
   - Layout and orthogonal routing via [elkjs](https://github.com/kieler/elkjs),
     with junction dots, clean pin legs, and readable label halos.
@@ -49,4 +62,5 @@ DSL that renders circuits as schematics, embeddable in Markdown.
   - VitePress documentation site with live in-browser diagrams.
   - GitHub Actions: CI, npm trusted publishing on release, and Pages deploy.
 
+[0.2.0]: https://github.com/emdzej/elmo/releases/tag/v0.2.0
 [0.1.0]: https://github.com/emdzej/elmo/releases/tag/v0.1.0

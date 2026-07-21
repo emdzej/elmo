@@ -3,7 +3,7 @@ layout: home
 hero:
   name: elmo
   text: Schematics as code
-  tagline: ELectronics MOdeling — a text DSL that renders as schematics, embeddable in Markdown.
+  tagline: '<span class="elmo-accent">EL</span>ectronics <span class="elmo-accent">MO</span>deling — a text DSL that renders as schematics, embeddable in Markdown.'
   image:
     src: /elmo-icon.svg
     alt: elmo
@@ -25,24 +25,7 @@ features:
 
 ## Try it
 
-The block below is written in elmo and rendered live in your browser:
+Edit the elmo source below — it renders live in your browser as you type. Pick an
+example to get started.
 
-```elmo
-title "555 astable"
-
-part U1 ic "NE555" pkg=DIP-8 {
-  left  2:TRIG  6:THRES  7:DISCH
-  right 3:OUT   4:~RESET
-  top   8:VCC
-  bottom 1:GND
-}
-part R1 res 10k
-part R2 res 47k
-part C1 cap 10n
-
-power VCC = U1.VCC U1.~RESET R1.1
-gnd   GND = U1.GND C1.2
-
-net disch  = U1.DISCH R1.2 R2.1        as=wire
-net timing = U1.THRES U1.TRIG R2.2 C1.1 as=wire
-```
+<ElmoPlayground />

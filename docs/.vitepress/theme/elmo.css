@@ -23,6 +23,12 @@
   --vp-c-brand-softer: rgba(255, 106, 92, 0.1);
 }
 
+/* accent the EL / MO of "ELectronics MOdeling" in the hero tagline */
+.VPHero .tagline .elmo-accent {
+  color: var(--vp-c-brand-1);
+  font-weight: 700;
+}
+
 /* A source + rendered-diagram pair, read as one unit. */
 .elmo-example {
   margin: 1.2rem 0;

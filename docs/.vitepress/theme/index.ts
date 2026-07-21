@@ -1,6 +1,7 @@
 import DefaultTheme from "vitepress/theme";
 import type { Theme } from "vitepress";
 import { render, mapResolver } from "@emdzej/elmo-core";
+import ElmoPlayground from "./ElmoPlayground.vue";
 import "./elmo.css";
 
 // Decode a UTF-8 base64 string in the browser.
@@ -46,7 +47,8 @@ async function renderElmoBlocks(): Promise<void> {
 
 const theme: Theme = {
   extends: DefaultTheme,
-  enhanceApp({ router }) {
+  enhanceApp({ app, router }) {
+    app.component("ElmoPlayground", ElmoPlayground);
     if (typeof window === "undefined") return;
     const rerender = () => window.setTimeout(renderElmoBlocks, 0);
     const prev = router.onAfterRouteChanged;

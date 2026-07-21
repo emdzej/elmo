@@ -62,5 +62,5 @@ DSL that renders circuits as schematics, embeddable in Markdown.
   - VitePress documentation site with live in-browser diagrams.
   - GitHub Actions: CI, npm trusted publishing on release, and Pages deploy.
 
-[0.2.0]: https://github.com/emdzej/elmo/releases/tag/v0.2.0
-[0.1.0]: https://github.com/emdzej/elmo/releases/tag/v0.1.0
+[0.2.0]: https://github.com/emdzej/elmo/releases/tag/0.2.0
+[0.1.0]: https://github.com/emdzej/elmo/releases/tag/0.1.0

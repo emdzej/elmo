@@ -49,6 +49,23 @@ rotate Q1 90
 mirror U3
 ```
 
+## Reusable parts
+
+Define a pinout once with `def` and instantiate it as many times as you like —
+the template name becomes the default label:
+
+```elmo
+def NE555 ic pkg=DIP-8 {
+  left  2:TRIG  6:THRES  7:DISCH
+  right 3:OUT   4:~RESET
+  top   8:VCC
+  bottom 1:GND
+}
+
+part U1 NE555
+part U2 NE555 pkg=SOIC-8
+```
+
 ## Reuse across files
 
 `import` pulls another file's declarations in; `as` puts them in a namespace

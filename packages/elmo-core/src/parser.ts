@@ -5,7 +5,7 @@
 // (in `left-of`, `header-1x4`, `--`, `->`, `V-`) is a nightmare for regex lexers
 // but a non-issue here because operators are always whitespace-delimited.
 
-import type { Diagnostic, Hint, NetKind, NetMember, Net, ParseOptions, Pin, Schematic, Side } from "./types.js";
+import type { Def, Diagnostic, Hint, NetKind, NetMember, Net, ParseOptions, Pin, Schematic, Side } from "./types.js";
 import { KINDS, resolveKind } from "./kinds.js";
 
 interface Token {
@@ -17,6 +17,7 @@ interface Token {
 
 const STATEMENT_KEYWORDS = new Set([
   "import",
+  "def",
   "part",
   "net",
   "power",
@@ -135,6 +136,7 @@ export function parse(src: string, opts?: ParseOptions): { schematic: Schematic;
     nets: [],
     hints: [],
     imports: [],
+    defs: [],
   };
   let wireCounter = 0;
 
@@ -150,6 +152,9 @@ export function parse(src: string, opts?: ParseOptions): { schematic: Schematic;
     switch (head.v) {
       case "import":
         parseImport(ts, schematic, err);
+        break;
+      case "def":
+        parseDef(ts, schematic, err);
         break;
       case "part":
         parsePart(ts, schematic, err);
@@ -180,8 +185,8 @@ export function parse(src: string, opts?: ParseOptions): { schematic: Schematic;
   }
 
   const imports = schematic.imports ?? [];
-  if (imports.length === 0) return { schematic, diagnostics };
-  if (!opts?.resolve) {
+  let result = schematic;
+  if (imports.length && !opts?.resolve) {
     for (const imp of imports) {
       err(`cannot resolve import '${imp.spec}': no import resolver configured`, {
         v: "",
@@ -190,10 +195,13 @@ export function parse(src: string, opts?: ParseOptions): { schematic: Schematic;
         col: imp.col,
       });
     }
-    return { schematic, diagnostics };
+  } else if (imports.length && opts?.resolve) {
+    const stack = opts._stack ?? new Set<string>(opts.path ? [opts.path] : []);
+    result = applyImports(schematic, diagnostics, opts, stack);
   }
-  const stack = opts._stack ?? new Set<string>(opts.path ? [opts.path] : []);
-  return applyImports(schematic, diagnostics, opts, stack);
+  // expand `def` templates last, so imported templates are available too
+  expandTemplates(result, diagnostics);
+  return { schematic: result, diagnostics };
 }
 
 type Err = (message: string, t?: Token) => void;
@@ -215,14 +223,22 @@ interface Layer {
   components: Schematic["components"];
   nets: Net[];
   hints: Hint[];
+  defs: Def[];
 }
 
-/** Prefix a sub-schematic into a namespace: refs and signal-net names get the
- * `ns.` prefix; power/gnd net names stay global so rails merge with the parent. */
+/** Prefix a sub-schematic into a namespace: refs, signal-net names, def names,
+ * and template-kind references get the `ns.` prefix; power/gnd net names stay
+ * global so rails merge with the parent. */
 function namespacePrefix(sch: Schematic, ns: string): Layer {
-  if (!ns) return { components: sch.components, nets: sch.nets, hints: sch.hints };
+  const defs = sch.defs ?? [];
+  if (!ns) return { components: sch.components, nets: sch.nets, hints: sch.hints, defs };
   const p = (ref: string) => `${ns}.${ref}`;
-  const components = sch.components.map((c) => ({ ...c, ref: p(c.ref) }));
+  const defNames = new Set(defs.map((d) => d.name));
+  const components = sch.components.map((c) => ({
+    ...c,
+    ref: p(c.ref),
+    kind: defNames.has(c.kind) ? p(c.kind) : c.kind, // template instances follow the def
+  }));
   const nets: Net[] = sch.nets.map((net) => ({
     ...net,
     name: net.kind === "signal" ? p(net.name) : net.name,
@@ -241,11 +257,13 @@ function namespacePrefix(sch: Schematic, ns: string): Layer {
         return { ...h, refs: h.refs.map(p) };
     }
   });
-  return { components, nets, hints };
+  const prefixedDefs = defs.map((d) => ({ ...d, name: p(d.name) }));
+  return { components, nets, hints, defs: prefixedDefs };
 }
 
 /** Merge layers low→high precedence. Later layers override earlier component
- * refs (last-declaration-wins) with a warning; nets and hints accumulate. */
+ * refs and def names (last-declaration-wins) with a warning; nets, hints, and
+ * unique defs accumulate. */
 function mergeLayers(layers: Layer[], diagnostics: Diagnostic[]): Layer {
   const order: string[] = [];
   const byRef = new Map<string, Schematic["components"][number]>();
@@ -259,10 +277,13 @@ function mergeLayers(layers: Layer[], diagnostics: Diagnostic[]): Layer {
       byRef.set(c.ref, c);
     }
   }
+  const defByName = new Map<string, Def>();
+  for (const layer of layers) for (const d of layer.defs) defByName.set(d.name, d);
   return {
     components: order.map((r) => byRef.get(r)!),
     nets: layers.flatMap((l) => l.nets),
     hints: layers.flatMap((l) => l.hints),
+    defs: [...defByName.values()],
   };
 }
 
@@ -288,12 +309,7 @@ function resolveMemberRefs(sch: Schematic): void {
   }
 }
 
-function applyImports(
-  schematic: Schematic,
-  diagnostics: Diagnostic[],
-  opts: ParseOptions,
-  stack: Set<string>,
-): { schematic: Schematic; diagnostics: Diagnostic[] } {
+function applyImports(schematic: Schematic, diagnostics: Diagnostic[], opts: ParseOptions, stack: Set<string>): Schematic {
   const layers: Layer[] = [];
   for (const imp of schematic.imports ?? []) {
     const r = opts.resolve!(imp.spec, opts.path);
@@ -311,7 +327,7 @@ function applyImports(
     for (const d of sub.diagnostics) diagnostics.push(d);
     layers.push(namespacePrefix(sub.schematic, imp.ns));
   }
-  layers.push({ components: schematic.components, nets: schematic.nets, hints: schematic.hints });
+  layers.push({ components: schematic.components, nets: schematic.nets, hints: schematic.hints, defs: schematic.defs ?? [] });
   const merged = mergeLayers(layers, diagnostics);
   const result: Schematic = {
     title: schematic.title,
@@ -321,14 +337,30 @@ function applyImports(
     ...merged,
   };
   resolveMemberRefs(result);
-  return { schematic: result, diagnostics };
+  return result;
 }
 
-function parsePart(ts: TokenStream, schematic: Schematic, err: Err): void {
+interface ParsedComponent {
+  ref: string;
+  kind: string;
+  value?: string;
+  attrs: Record<string, string>;
+  pins: Pin[];
+}
+
+/** Parse the shared `<ref/name> <kind> [value] [attrs] [{pins}]` body used by
+ * both `part` (an instance) and `def` (a reusable template). */
+function parseComponentBody(keyword: string, ts: TokenStream, err: Err): ParsedComponent | null {
   const refTok = ts.next();
   const kindTok = ts.next();
-  if (!refTok || refTok.quoted) return err("part: expected a ref", refTok);
-  if (!kindTok || kindTok.quoted) return err("part: expected a kind", kindTok);
+  if (!refTok || refTok.quoted) {
+    err(`${keyword}: expected a name`, refTok);
+    return null;
+  }
+  if (!kindTok || kindTok.quoted) {
+    err(`${keyword}: expected a kind`, kindTok);
+    return null;
+  }
   const ref = refTok.v;
   const kind = resolveKind(kindTok.v);
   const attrs: Record<string, string> = {};
@@ -353,11 +385,46 @@ function parsePart(ts: TokenStream, schematic: Schematic, err: Err): void {
     } else if (value === undefined) {
       value = t.v;
     } else {
-      err(`part ${ref}: unexpected token '${t.v}'`, t);
+      err(`${keyword} ${ref}: unexpected token '${t.v}'`, t);
     }
   }
+  return { ref, kind, value, attrs, pins: pins ?? implicitPins(kind) };
+}
 
-  schematic.components.push({ ref, kind, value, attrs, pins: pins ?? implicitPins(kind) });
+function parsePart(ts: TokenStream, schematic: Schematic, err: Err): void {
+  const c = parseComponentBody("part", ts, err);
+  if (c) schematic.components.push(c);
+}
+
+function parseDef(ts: TokenStream, schematic: Schematic, err: Err): void {
+  const c = parseComponentBody("def", ts, err);
+  if (!c) return;
+  if (KINDS[c.ref] || resolveKind(c.ref) in KINDS) {
+    err(`def '${c.ref}' shadows a built-in kind — choose another name`);
+  }
+  schematic.defs!.push({ name: c.ref, kind: c.kind, value: c.value, attrs: c.attrs, pins: c.pins });
+}
+
+/** Expand `part` instances whose kind names a `def` template. */
+function expandTemplates(sch: Schematic, diagnostics: Diagnostic[]): void {
+  if (!sch.defs?.length) return;
+  const byName = new Map(sch.defs.map((d) => [d.name, d]));
+  for (const comp of sch.components) {
+    const def = byName.get(comp.kind);
+    if (!def) continue;
+    if (byName.has(def.kind)) {
+      diagnostics.push({ severity: "error", message: `template '${def.name}' cannot extend another template ('${def.kind}')`, line: 0, col: 0 });
+      continue;
+    }
+    if (comp.pins.length) {
+      diagnostics.push({ severity: "warning", message: `part '${comp.ref}': per-instance pins are ignored; using template '${def.name}'`, line: 0, col: 0 });
+    }
+    // template name (without namespace prefix) is the default label
+    comp.value = comp.value ?? def.value ?? def.name.split(".").pop();
+    comp.attrs = { ...def.attrs, ...comp.attrs }; // instance attrs win
+    comp.pins = def.pins.map((p) => ({ ...p, aliases: p.aliases ? [...p.aliases] : undefined }));
+    comp.kind = def.kind; // resolve to the base built-in kind
+  }
 }
 
 function implicitPins(kind: string): Pin[] {

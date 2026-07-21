@@ -145,6 +145,39 @@ part U3 opamp "LM358" { }      # pins: +, -, out, V+, V-
 
 Pin names for these come from the symbol definition (§8), not the user.
 
+### 4.4 Reusable templates (`def`)
+
+When several parts share a pinout, define it once with `def` and instantiate it
+by using the template name in the `kind` slot:
+
+```elmo
+def NE555 ic pkg=DIP-8 {
+  left  2:TRIG  6:THRES  7:DISCH
+  right 3:OUT   4:~RESET
+  top   8:VCC
+  bottom 1:GND
+}
+
+part U1 NE555               # inherits pins, pkg, and the label "NE555"
+part U2 NE555               # again, no repetition
+part U3 NE555 pkg=SOIC-8    # override an attr on this instance
+part U4 NE555 "555 timer"   # override the label
+```
+
+- **A template is a user-defined kind.** `def <name> <baseKind> [value] [attrs] [{ pins }]`;
+  `baseKind` is any built-in kind (§8). Instantiate with the normal `part` form.
+- **The template name is the default label**; an instance value overrides it, and
+  a `value` on the `def` overrides the name.
+- **Instance attrs merge over the template's** (the instance wins).
+- **Kind resolution** checks templates before built-ins; a `def` may not shadow a
+  built-in kind name.
+- **Libraries via imports.** Put `def`s in a file, `import` it, and instantiate.
+  With `import … as lib`, reference the template as `lib.NE555`. Rails and
+  namespacing follow §3.1.
+
+Deferred to a later version: template inheritance (a `def` based on another `def`)
+and per-instance pin/side overrides.
+
 ## 5. Nets & connections
 
 Four ways to express connectivity. **The power/gnd distinction is semantic, not cosmetic** — it changes how things render.
@@ -369,11 +402,12 @@ near  C2 U1.VCC
 
 ```text
 document      = { statement } ;
-statement     = import | component | net | hint | directive | comment ;
+statement     = import | def | component | net | hint | directive | comment ;
 
 import        = "import" string [ "as" ident ] NL ;
+def           = "def" ref kind [ label ] { attr } [ pinblock ] NL ;
 component     = "part" ref kind [ label ] { attr } [ pinblock ] NL ;
-kind          = ident ;   (* any of §8; unknown kinds fall back to a labelled box *)
+kind          = ident ;   (* built-in (§8), a `def` template, else a labelled box *)
 label         = string | value ;
 attr          = ident "=" ( ident | value | string ) ;
 pinblock      = "{" { pinline } "}" ;

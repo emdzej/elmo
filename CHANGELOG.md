@@ -21,6 +21,9 @@ DSL that renders circuits as schematics, embeddable in Markdown.
   - `import "file" [as ns]` — split designs across files; namespaces prefix refs
     and signal nets while power/ground rails stay global; transitive imports are
     flattened, re-declarations are last-wins with a warning, cycles are broken.
+  - `def <name> <kind> …` — reusable part templates instantiated as
+    `part <ref> <name>`; inherit pins/attrs, default the label to the template
+    name, override attrs per instance, and share across files via imports.
   - Shared-pin connectivity merge so tee'd wires form one electrical net.
   - Layout and orthogonal routing via [elkjs](https://github.com/kieler/elkjs),
     with junction dots, clean pin legs, and readable label halos.

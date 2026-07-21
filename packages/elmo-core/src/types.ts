@@ -51,6 +51,16 @@ export type Hint =
   | { type: "mirror"; ref: string }
   | { type: "group"; label: string; refs: string[] };
 
+/** A reusable part template (`def <name> <baseKind> [value] [attrs] [{pins}]`).
+ * Instantiated by using its `name` in the `kind` slot of a `part`. */
+export interface Def {
+  name: string;
+  kind: string; // base built-in kind (ic, res, …)
+  value?: string;
+  attrs: Record<string, string>;
+  pins: Pin[];
+}
+
 export interface ImportDecl {
   spec: string; // the quoted path, e.g. "amp.elmo"
   ns: string; // namespace alias from `as foo`, or "" for the default namespace
@@ -66,6 +76,7 @@ export interface Schematic {
   nets: Net[];
   hints: Hint[];
   imports?: ImportDecl[];
+  defs?: Def[];
 }
 
 /** Loads an imported file. Returns its canonical path (for cycle detection) and

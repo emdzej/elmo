@@ -66,3 +66,17 @@ net a = R1.2 C1.+
 net b = L1.1 D1.anode
 net c = Q1.C M1.D
 ```
+
+## Routable rails & a signal terminal
+
+`routable` draws one power/ground symbol wired to every member (instead of one
+per pin); `signal` is a labelled hollow-circle terminal.
+
+```elmo
+title "routable VCC + single GND"
+part U1 ic "MCU" { left 1:GP0 right 8:VCC top 9:AVCC bottom 10:GND }
+part R1 res 10k
+signal VCC = U1.VCC U1.AVCC R1.1 routable
+gnd GND = U1.GND R1.2 routable
+signal TP1 = U1.GP0
+```

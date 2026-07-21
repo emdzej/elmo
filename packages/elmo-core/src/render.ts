@@ -8,7 +8,7 @@
 
 import type { Net, Schematic } from "./types.js";
 import { layoutSchematic, placePins, resolvePin, sizeOf, type Layout, type PlacedComponent, type PlacedPin } from "./layout.js";
-import { netMode, labelThreshold } from "./nets.js";
+import { netMode, labelThreshold, isRouted, isRoutable } from "./nets.js";
 import { normalizeNets } from "./normalize.js";
 import { KINDS } from "./kinds.js";
 import { SYMBOLS } from "./symbols.js";
@@ -102,7 +102,11 @@ function renderComponent(pc: PlacedComponent): string {
   return `<g class="elmo-part"><g transform="${pc.transform}">${geometry}</g>${world.join("")}</g>`;
 }
 
-function renderPower(pp: PlacedPin, name: string): string {
+// symbol drawers take just a connection point + outward direction, so they work
+// for a pin (per-member) or a routable single-symbol anchor
+type Anchor = { stub: Vec; dir: Vec };
+
+function renderPower(pp: Anchor, name: string): string {
   const d = pp.dir;
   const pe = perp(d);
   const q = add(pp.stub, scale(d, 8));
@@ -116,7 +120,7 @@ function renderPower(pp: PlacedPin, name: string): string {
   ].join("");
 }
 
-function renderGnd(pp: PlacedPin, name: string, showLabel: boolean): string {
+function renderGnd(pp: Anchor, name: string, showLabel: boolean): string {
   const d = pp.dir;
   const pe = perp(d);
   const q = add(pp.stub, scale(d, 6));
@@ -128,6 +132,18 @@ function renderGnd(pp: PlacedPin, name: string, showLabel: boolean): string {
   });
   if (showLabel) out.push(text(name, add(q, scale(d, 22)), "elmo-gndlabel", anchorFor(d)));
   return out.join("");
+}
+
+function renderSignal(pp: Anchor, name: string): string {
+  const d = pp.dir;
+  const r = 4;
+  const c = add(pp.stub, scale(d, r + 2)); // circle centre, just past the stub
+  const labelPos = add(c, scale(d, r + 4));
+  return [
+    line(pp.stub, add(pp.stub, scale(d, 2)), "elmo-net"),
+    `<circle class="elmo-signal" cx="${n(c.x)}" cy="${n(c.y)}" r="${n(r)}"/>`,
+    text(name, labelPos, "elmo-signallabel", anchorFor(d)),
+  ].join("");
 }
 
 function renderNetLabel(pp: PlacedPin, name: string): string {
@@ -169,22 +185,33 @@ function renderWireNet(net: Net, lyt: Layout, routes: Map<Net, Vec[][]>): string
   return pins.length >= 2 ? fallbackWire(pins[0]!, pins[1]!) : "";
 }
 
-/** Power/ground symbols and net labels (drawn after components, at pins). */
-function renderNetDecoration(net: Net, lyt: Layout, threshold: number): string {
+/** Net symbols (power/gnd/signal) and labels, drawn after components. A routable
+ * symbol net draws one symbol at its ELK-placed anchor; otherwise one per pin. */
+function renderNetDecoration(
+  net: Net,
+  lyt: Layout,
+  symbolAnchors: Map<Net, Anchor>,
+  threshold: number,
+): string {
+  const mode = netMode(net, threshold);
+  if (mode === "wire") return ""; // routed only, no decoration
   const pins = net.members
     .map((m) => resolvePin(lyt, m.ref, m.pin))
     .filter((p): p is PlacedPin => p !== undefined);
-  if (pins.length === 0) return "";
-  switch (netMode(net, threshold)) {
-    case "power":
-      return pins.map((p) => renderPower(p, net.name)).join("");
-    case "gnd":
-      return pins.map((p) => renderGnd(p, net.name, net.name.toUpperCase() !== "GND")).join("");
-    case "label":
-      return pins.map((p) => renderNetLabel(p, net.name)).join("");
-    default:
-      return "";
+  if (mode === "label") return pins.map((p) => renderNetLabel(p, net.name)).join("");
+
+  const drawAt = (a: Anchor): string =>
+    mode === "power"
+      ? renderPower(a, net.name)
+      : mode === "gnd"
+        ? renderGnd(a, net.name, net.name.toUpperCase() !== "GND")
+        : renderSignal(a, net.name);
+
+  if (isRoutable(net)) {
+    const anchor = symbolAnchors.get(net);
+    return anchor ? drawAt(anchor) : pins.map(drawAt).join(""); // fallback: per-pin
   }
+  return pins.map(drawAt).join("");
 }
 
 /** Solid dots where wires electrically tee: ELK branch points + cross-net shared pins. */
@@ -230,7 +257,8 @@ const STYLE = `
 .elmo .elmo-value{fill:var(--elmo-muted);font:400 10px ui-sans-serif,system-ui,sans-serif;}
 .elmo .elmo-pinname{fill:var(--elmo-fg);font:400 10px ui-monospace,monospace;}
 .elmo .elmo-pinnum{fill:var(--elmo-muted);font:400 8px ui-monospace,monospace;}
-.elmo .elmo-powerlabel,.elmo .elmo-gndlabel{fill:var(--elmo-accent);font:600 9px ui-monospace,monospace;}
+.elmo .elmo-powerlabel,.elmo .elmo-gndlabel,.elmo .elmo-signallabel{fill:var(--elmo-accent);font:600 9px ui-monospace,monospace;}
+.elmo .elmo-signal{fill:var(--elmo-bg);stroke:var(--elmo-accent);stroke-width:1.5;}
 .elmo .elmo-taglabel{fill:var(--elmo-tag);stroke:var(--elmo-accent);stroke-width:1;}
 .elmo .elmo-nettext{fill:var(--elmo-accent);font:600 9px ui-monospace,monospace;}
 .elmo .elmo-title{fill:var(--elmo-fg);font:700 15px ui-sans-serif,system-ui,sans-serif;}
@@ -246,7 +274,7 @@ const PAD = 56; // outer margin, leaves room for overhanging labels/power/gnd gl
 export async function renderSchematic(input: Schematic, opts: RenderOptions = {}): Promise<string> {
   const schematic = normalizeNets(input); // merge shared-pin nets before layout
   const T = labelThreshold(schematic.settings, opts.labelThreshold);
-  const { layout: lyt, routes, junctions, groups } = await layoutSchematic(schematic, { labelThreshold: T });
+  const { layout: lyt, routes, junctions, groups, symbolAnchors } = await layoutSchematic(schematic, { labelThreshold: T });
   const base = opts.className ?? "elmo";
   // `theme dark|light|mono` forces palette regardless of viewer preference
   const theme = opts.theme ?? schematic.theme;
@@ -266,9 +294,10 @@ export async function renderSchematic(input: Schematic, opts: RenderOptions = {}
     body.push(`<rect class="elmo-group" x="${n(g.x)}" y="${n(g.y)}" width="${n(g.w)}" height="${n(g.h)}" rx="6"/>`);
     if (g.label) body.push(text(g.label, { x: g.x + 8, y: g.y + 15 }, "elmo-grouplabel", "start"));
   }
-  for (const net of schematic.nets) if (netMode(net, T) === "wire") body.push(renderWireNet(net, lyt, routes));
+  // routed nets (plain wires + routable symbol nets) draw under components
+  for (const net of schematic.nets) if (isRouted(net, T)) body.push(renderWireNet(net, lyt, routes));
   for (const pc of lyt.components) body.push(renderComponent(pc));
-  for (const net of schematic.nets) if (netMode(net, T) !== "wire") body.push(renderNetDecoration(net, lyt, T));
+  for (const net of schematic.nets) body.push(renderNetDecoration(net, lyt, symbolAnchors, T));
   body.push(renderJunctions(junctions, routes));
   body.push(`</g>`);
 

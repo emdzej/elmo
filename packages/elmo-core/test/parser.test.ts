@@ -63,7 +63,7 @@ describe("parse", () => {
     const kinds = Object.fromEntries(schematic.nets.filter((n) => !n.synthetic).map((n) => [n.name, n.kind]));
     expect(kinds.VCC).toBe("power");
     expect(kinds.GND).toBe("gnd");
-    expect(kinds.n_thres).toBe("signal");
+    expect(kinds.n_thres).toBe("net");
   });
 
   it("parses a wire into a synthetic 2-member net", () => {

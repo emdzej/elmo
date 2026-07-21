@@ -20,6 +20,7 @@ const STATEMENT_KEYWORDS = new Set([
   "def",
   "part",
   "net",
+  "signal",
   "power",
   "gnd",
   "wire",
@@ -162,6 +163,7 @@ export function parse(src: string, opts?: ParseOptions): { schematic: Schematic;
         parsePart(ts, schematic, err);
         break;
       case "net":
+      case "signal":
       case "power":
       case "gnd":
         parseNet(head.v, ts, schematic, err);
@@ -244,7 +246,7 @@ function namespacePrefix(sch: Schematic, ns: string): Layer {
   }));
   const nets: Net[] = sch.nets.map((net) => ({
     ...net,
-    name: net.kind === "signal" ? p(net.name) : net.name,
+    name: net.kind === "net" ? p(net.name) : net.name, // plain nets namespaced; rails/symbols global
     members: net.members.map((m) => ({ ...m, ref: p(m.ref) })),
   }));
   const hints: Hint[] = sch.hints.map((h) => {
@@ -496,7 +498,7 @@ function parsePinBlock(ts: TokenStream, kind: string, err: Err): Pin[] {
 }
 
 function parseNet(keyword: string, ts: TokenStream, schematic: Schematic, err: Err): void {
-  const kind: NetKind = keyword === "net" ? "signal" : (keyword as NetKind);
+  const kind = keyword as NetKind; // net | signal | power | gnd
   const nameTok = ts.next();
   if (!nameTok || nameTok.quoted) return err(`${keyword}: expected a net name`, nameTok);
   const attrs: Record<string, string> = {};
@@ -505,7 +507,9 @@ function parseNet(keyword: string, ts: TokenStream, schematic: Schematic, err: E
   while (ts.peek() && !ts.atStatementBoundary()) {
     const t = ts.next()!;
     if (t.v === "=") continue; // separator between name/attrs and members
-    if (t.v.includes("=")) {
+    if (t.v === "routable") {
+      attrs.routable = "true"; // bare flag: one symbol wired to all members
+    } else if (t.v.includes("=")) {
       const [k, v] = splitFirst(t.v, "=");
       attrs[k] = v ?? "";
     } else {
@@ -535,7 +539,7 @@ function parseWire(ts: TokenStream, schematic: Schematic, err: Err, n: number): 
   const mb = parseRef(b);
   if (!ma || !mb) return;
   // `--` and `->` are equivalent: the edge already carries an a→b direction.
-  schematic.nets.push({ name: `_w${n}`, kind: "signal", attrs: {}, members: [ma, mb], synthetic: true, line: a.line, col: a.col });
+  schematic.nets.push({ name: `_w${n}`, kind: "net", attrs: {}, members: [ma, mb], synthetic: true, line: a.line, col: a.col });
 }
 
 function parseHint(keyword: string, ts: TokenStream, schematic: Schematic, err: Err): void {

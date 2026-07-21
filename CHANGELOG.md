@@ -4,6 +4,22 @@ All notable changes to elmo are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`signal` net symbol** — a labelled hollow circle, a lightweight named
+  node/test point you can wire to without a connector.
+- **`routable` flag** on `power`/`gnd`/`signal` nets — draws one symbol and
+  routes wires to every member (with junction dots) instead of one symbol per
+  pin. Default stays per-pin (backward compatible).
+
+### Changed
+
+- Internal net kind for a plain `net` is now `"net"` (was `"signal"`), freeing
+  `signal` for the new symbol. Affects the `kind` field of exported netlist
+  entries.
+
 ## [0.3.1] - 2026-07-21
 
 ### Fixed

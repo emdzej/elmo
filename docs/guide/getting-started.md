@@ -17,9 +17,11 @@ part U1 ic "NE555" pkg=DIP-8 { left 2:TRIG 6:THRES right 3:OUT top 8:VCC bottom 
 
 ## Connections
 
-- `wire A.p -- B.q` — a point-to-point connection (`->` adds a flow hint).
+- `wire A.p -- B.q` — a point-to-point connection (`->` is an equivalent alias).
 - `net name = A.p B.q C.r` — a named net; 2 members route as a wire, 3+ become labels (`as=wire` forces routing).
-- `power NAME = …` and `gnd NAME = …` — render as rail/ground symbols, never routed.
+- `power NAME = …`, `gnd NAME = …`, `signal NAME = …` — net **symbols** (rail flag,
+  ground symbol, hollow-circle terminal). By default one symbol is stamped at each
+  member pin; add `routable` to draw a single symbol wired to all members.
 
 ```elmo
 part U1 ic "MCU" { left 1:IN right 2:OUT top 3:VCC bottom 4:GND }
@@ -27,8 +29,9 @@ part R1 res 220
 part D1 led
 wire U1.OUT -- R1.1
 wire R1.2 -- D1.anode
+signal TEST = U1.OUT
 power VCC = U1.VCC
-gnd GND = U1.GND D1.cathode
+gnd GND = U1.GND D1.cathode routable
 ```
 
 ## Metadata

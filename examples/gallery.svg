@@ -15,7 +15,8 @@
 .elmo .elmo-value{fill:var(--elmo-muted);font:400 10px ui-sans-serif,system-ui,sans-serif;}
 .elmo .elmo-pinname{fill:var(--elmo-fg);font:400 10px ui-monospace,monospace;}
 .elmo .elmo-pinnum{fill:var(--elmo-muted);font:400 8px ui-monospace,monospace;}
-.elmo .elmo-powerlabel,.elmo .elmo-gndlabel{fill:var(--elmo-accent);font:600 9px ui-monospace,monospace;}
+.elmo .elmo-powerlabel,.elmo .elmo-gndlabel,.elmo .elmo-signallabel{fill:var(--elmo-accent);font:600 9px ui-monospace,monospace;}
+.elmo .elmo-signal{fill:var(--elmo-bg);stroke:var(--elmo-accent);stroke-width:1.5;}
 .elmo .elmo-taglabel{fill:var(--elmo-tag);stroke:var(--elmo-accent);stroke-width:1;}
 .elmo .elmo-nettext{fill:var(--elmo-accent);font:600 9px ui-monospace,monospace;}
 .elmo .elmo-title{fill:var(--elmo-fg);font:700 15px ui-sans-serif,system-ui,sans-serif;}

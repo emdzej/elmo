@@ -36,6 +36,25 @@ describe("render", () => {
     expect(warnings.some((w) => w.message.includes("NE555"))).toBe(true);
   });
 
+  it("draws a signal circle per pin, or a single one when routable", async () => {
+    const perPin = (await render("part A ic { right 1:o }\npart B ic { left 1:i }\nsignal S = A.1 B.1")).svg;
+    expect((perPin.match(/class="elmo-signal"/g) ?? []).length).toBe(2);
+    const one = (await render("part A ic { right 1:o }\npart B ic { left 1:i }\nsignal S = A.1 B.1 routable")).svg;
+    expect((one.match(/class="elmo-signal"/g) ?? []).length).toBe(1);
+  });
+
+  it("routable gnd draws a single symbol and routes wires to members", async () => {
+    const { svg } = await render("part A ic { right 1:o }\npart B ic { left 1:i }\ngnd GND = A.1 B.1 routable");
+    expect(svg).toContain("<polyline"); // wires routed from the one symbol
+    expect(svg).not.toContain("NaN");
+  });
+
+  it("keeps power/gnd per-pin by default (backward compatible)", async () => {
+    const { svg } = await render("part A ic { top 1:VCC }\npart B ic { top 1:VCC }\npower VCC = A.1 B.1");
+    // two rail flags, no routed wire between them
+    expect(svg).not.toContain("<polyline");
+  });
+
   it("reports net diagnostics at the offending source line (not line 0)", () => {
     const src = "part R1 res 10k\npart R2 res 10k\n\nnet bad = R1.9 R2.1";
     const errs = validate(parse(src).schematic).filter((d) => d.severity === "error");

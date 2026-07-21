@@ -28,7 +28,9 @@ export interface Component {
   col?: number;
 }
 
-export type NetKind = "signal" | "power" | "gnd";
+// "net" = plain signal net (wire/label); "signal" = a labelled circle terminal;
+// "power"/"gnd" = rail/ground symbols. All but "net" are drawn as net symbols.
+export type NetKind = "net" | "signal" | "power" | "gnd";
 
 export interface NetMember {
   ref: string;

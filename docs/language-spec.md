@@ -194,7 +194,11 @@ and per-instance pin/side overrides.
 
 ## 5. Nets & connections
 
-Four ways to express connectivity. **The power/gnd distinction is semantic, not cosmetic** — it changes how things render.
+Several ways to express connectivity. **The power/gnd/signal distinction is
+semantic, not cosmetic** — it changes how things render. `power`, `gnd`, and
+`signal` are **net symbols**: by default a symbol is stamped at each member pin
+(never routed). Add the `routable` flag to draw a **single** symbol and route
+wires out to every member instead (§5.7).
 
 ### 5.1 Signal nets (routed, labeled)
 
@@ -231,7 +235,19 @@ gnd GND = U1.8 U1.22 J1.GND C1.2
 gnd AGND sym=analog = U3.V- C5.2      # alternate ground symbol
 ```
 
-Each member gets a ground symbol. Not routed.
+Each member gets a ground symbol. Not routed (unless `routable`, §5.7).
+
+### 5.3a Signal terminals (rendered as a labelled circle)
+
+```elmo-src
+signal VCC = U1.VCC R1.1     # a named node, one hollow circle per pin
+signal TP1 = U3.OUT          # a labelled test point / terminal
+```
+
+A `signal` net draws a small hollow circle with its name at each member pin — a
+lightweight named node you can wire to (or mark) without inventing a connector.
+Like `power`/`gnd`, it is a symbol net (its name stays global across namespaces),
+and it honours `routable` (§5.7).
 
 ### 5.4 Point-to-point wires
 
@@ -263,6 +279,18 @@ power VCC = U2.VCC       # merges into the single VCC net
 
 Trade-off: a typo'd net name silently creates a second net. The linter mitigates
 this by **warning on any net with a single member** (§11).
+
+### 5.7 Routable net symbols
+
+By default a `power`/`gnd`/`signal` symbol is drawn at **every** member pin. Add
+the `routable` flag to draw **one** symbol and route orthogonal wires out to all
+members (with junction dots) — cleaner when you want a single ground or rail for
+the whole sheet:
+
+```elmo-src
+gnd    GND = U1.GND C1.2 C2.2   routable   # one ground symbol, wired to all three
+signal VCC = U1.VCC U1.AVCC R1.1 routable   # one VCC circle, wired out
+```
 
 ## 6. Layout hints (all optional)
 
@@ -310,6 +338,7 @@ A few attribute keys are read by the pipeline rather than passed through:
 | `pol=yes` | On a `cap`, selects the polarized capacitor symbol. |
 | `sym=...` | On a `gnd` net, selects an alternate ground symbol (e.g. `sym=analog`). |
 | `as=wire\|label` | On a `net`, forces routed wire or net labels regardless of fan-out (§5.1). |
+| `routable` | On a `power`/`gnd`/`signal` net, draws one symbol wired to all members instead of one per pin (§5.7). |
 
 `show`/`hide` affect the **drawing only** — hidden pins stay in the IR, so the
 netlist and BOM are unchanged.
@@ -407,8 +436,9 @@ Pins listed as `a/b` mean primary name with accepted aliases.
 | --- | --- |
 | `power` | VCC/rail flag |
 | `gnd` | ground symbol |
+| `signal` | labelled hollow circle (named node / test point) |
 
-User-registered custom symbols are post-v1.
+All three support `routable` (§5.7). User-registered custom symbols are post-v1.
 
 ## 9. Complete example
 
@@ -454,7 +484,7 @@ pinline       = [ side ] pinentry { pinentry } NL ;
 side          = "left" | "right" | "top" | "bottom" ;
 pinentry      = [ pinnum ":" ] pinname | pinnum ;
 
-net           = ( "net" | "power" | "gnd" ) netname { attr } "=" pinref { pinref } NL
+net           = ( "net" | "signal" | "power" | "gnd" ) netname { attr | "routable" } "=" pinref { pinref } NL
               | "wire" pinref ( "--" | "->" ) pinref NL ;
 pinref        = ref "." ( pinnum | pinname ) ;
 

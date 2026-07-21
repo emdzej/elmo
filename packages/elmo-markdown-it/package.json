@@ -1,6 +1,6 @@
 {
   "name": "@emdzej/elmo-markdown-it",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "markdown-it plugin that renders ```elmo fenced blocks as SVG schematics",
   "type": "module",
   "main": "./dist/index.js",

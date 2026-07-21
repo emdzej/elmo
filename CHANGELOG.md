@@ -4,6 +4,26 @@ All notable changes to elmo are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-07-21
+
+### Added
+
+- **Per-instance pin visibility**: `show="…"` / `hide="…"` draw only (or all but)
+  the listed pins — trim a large template to the pins in use. Wired pins are
+  always kept (with a warning); hidden pins stay in the IR so netlist/BOM are
+  unaffected.
+
+### Fixed
+
+- Layout reserves the correct label space per component, so labels of packed
+  (disconnected) parts no longer overlap the row above.
+
+### Changed
+
+- Build tooling moved to **Turborepo** (cached, topological `build`/`typecheck`).
+- Documented the reserved attributes (`link`, `show`, `hide`, `pol`, `sym`, `as`)
+  in the language spec.
+
 ## [0.2.0] - 2026-07-21
 
 ### Added
@@ -13,9 +33,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the template's pins and attrs, default their label to the template name, allow
   per-instance attr/label overrides, and are shareable across files via imports
   (`import … as lib` → `part U1 lib.NE555`).
-- **Per-instance pin visibility**: `show="…"` / `hide="…"` draw only (or all but)
-  the listed pins — trim a large template to the pins in use. Wired pins are
-  always kept; hidden pins stay in the IR so netlist/BOM are unaffected.
 
 ### Docs
 
@@ -65,5 +82,6 @@ DSL that renders circuits as schematics, embeddable in Markdown.
   - VitePress documentation site with live in-browser diagrams.
   - GitHub Actions: CI, npm trusted publishing on release, and Pages deploy.
 
+[0.3.0]: https://github.com/emdzej/elmo/releases/tag/0.3.0
 [0.2.0]: https://github.com/emdzej/elmo/releases/tag/0.2.0
 [0.1.0]: https://github.com/emdzej/elmo/releases/tag/0.1.0

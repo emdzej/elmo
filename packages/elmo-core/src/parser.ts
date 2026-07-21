@@ -142,6 +142,8 @@ export function parse(src: string, opts?: ParseOptions): { schematic: Schematic;
 
   const err = (message: string, t?: Token) =>
     diagnostics.push({ severity: "error", message, line: t?.line ?? 0, col: t?.col ?? 0 });
+  const warn = (message: string, t?: Token) =>
+    diagnostics.push({ severity: "warning", message, line: t?.line ?? 0, col: t?.col ?? 0 });
 
   while (ts.peek()) {
     const head = ts.next()!;
@@ -179,7 +181,7 @@ export function parse(src: string, opts?: ParseOptions): { schematic: Schematic;
         parseDirective(head.v, ts, schematic, err);
         break;
       case "set":
-        parseSet(ts, schematic);
+        parseSet(ts, schematic, warn);
         break;
     }
   }
@@ -197,7 +199,8 @@ export function parse(src: string, opts?: ParseOptions): { schematic: Schematic;
     }
   } else if (imports.length && opts?.resolve) {
     const stack = opts._stack ?? new Set<string>(opts.path ? [opts.path] : []);
-    result = applyImports(schematic, diagnostics, opts, stack);
+    const cache = opts._cache ?? new Map<string, Schematic>();
+    result = applyImports(schematic, diagnostics, opts, stack, cache);
   }
   // expand `def` templates last, so imported templates are available too
   expandTemplates(result, diagnostics);
@@ -270,7 +273,7 @@ function mergeLayers(layers: Layer[], diagnostics: Diagnostic[]): Layer {
   for (const layer of layers) {
     for (const c of layer.components) {
       if (byRef.has(c.ref)) {
-        diagnostics.push({ severity: "warning", message: `redeclared component '${c.ref}' (last declaration wins)`, line: 0, col: 0 });
+        diagnostics.push({ severity: "warning", message: `redeclared component '${c.ref}' (last declaration wins)`, line: c.line ?? 0, col: c.col ?? 0 });
       } else {
         order.push(c.ref);
       }
@@ -309,7 +312,13 @@ function resolveMemberRefs(sch: Schematic): void {
   }
 }
 
-function applyImports(schematic: Schematic, diagnostics: Diagnostic[], opts: ParseOptions, stack: Set<string>): Schematic {
+function applyImports(
+  schematic: Schematic,
+  diagnostics: Diagnostic[],
+  opts: ParseOptions,
+  stack: Set<string>,
+  cache: Map<string, Schematic>,
+): Schematic {
   const layers: Layer[] = [];
   for (const imp of schematic.imports ?? []) {
     const r = opts.resolve!(imp.spec, opts.path);
@@ -321,11 +330,22 @@ function applyImports(schematic: Schematic, diagnostics: Diagnostic[], opts: Par
       diagnostics.push({ severity: "warning", message: `circular import '${imp.spec}' skipped`, line: imp.line, col: imp.col });
       continue;
     }
-    stack.add(r.path);
-    const sub = parse(r.source, { resolve: opts.resolve, path: r.path, _stack: stack });
-    stack.delete(r.path);
-    for (const d of sub.diagnostics) diagnostics.push(d);
-    layers.push(namespacePrefix(sub.schematic, imp.ns));
+    // memoize: a file re-imported (e.g. a diamond, or a shared parts library) is
+    // parsed once; later references clone the cached result. Diagnostics are
+    // reported on the first parse only.
+    const cached = cache.get(r.path);
+    let subSchema: Schematic;
+    if (cached) {
+      subSchema = structuredClone(cached);
+    } else {
+      stack.add(r.path);
+      const sub = parse(r.source, { resolve: opts.resolve, path: r.path, _stack: stack, _cache: cache });
+      stack.delete(r.path);
+      for (const d of sub.diagnostics) diagnostics.push(d);
+      cache.set(r.path, structuredClone(sub.schematic)); // keep a pristine copy
+      subSchema = sub.schematic;
+    }
+    layers.push(namespacePrefix(subSchema, imp.ns));
   }
   layers.push({ components: schematic.components, nets: schematic.nets, hints: schematic.hints, defs: schematic.defs ?? [] });
   const merged = mergeLayers(layers, diagnostics);
@@ -346,6 +366,8 @@ interface ParsedComponent {
   value?: string;
   attrs: Record<string, string>;
   pins: Pin[];
+  line: number;
+  col: number;
 }
 
 /** Parse the shared `<ref/name> <kind> [value] [attrs] [{pins}]` body used by
@@ -388,7 +410,7 @@ function parseComponentBody(keyword: string, ts: TokenStream, err: Err): ParsedC
       err(`${keyword} ${ref}: unexpected token '${t.v}'`, t);
     }
   }
-  return { ref, kind, value, attrs, pins: pins ?? implicitPins(kind) };
+  return { ref, kind, value, attrs, pins: pins ?? implicitPins(kind), line: refTok.line, col: refTok.col };
 }
 
 function parsePart(ts: TokenStream, schematic: Schematic, err: Err): void {
@@ -402,7 +424,7 @@ function parseDef(ts: TokenStream, schematic: Schematic, err: Err): void {
   if (KINDS[c.ref] || resolveKind(c.ref) in KINDS) {
     err(`def '${c.ref}' shadows a built-in kind — choose another name`);
   }
-  schematic.defs!.push({ name: c.ref, kind: c.kind, value: c.value, attrs: c.attrs, pins: c.pins });
+  schematic.defs!.push({ name: c.ref, kind: c.kind, value: c.value, attrs: c.attrs, pins: c.pins, line: c.line, col: c.col });
 }
 
 /** Expand `part` instances whose kind names a `def` template. */
@@ -413,11 +435,11 @@ function expandTemplates(sch: Schematic, diagnostics: Diagnostic[]): void {
     const def = byName.get(comp.kind);
     if (!def) continue;
     if (byName.has(def.kind)) {
-      diagnostics.push({ severity: "error", message: `template '${def.name}' cannot extend another template ('${def.kind}')`, line: 0, col: 0 });
+      diagnostics.push({ severity: "error", message: `template '${def.name}' cannot extend another template ('${def.kind}')`, line: def.line ?? 0, col: def.col ?? 0 });
       continue;
     }
     if (comp.pins.length) {
-      diagnostics.push({ severity: "warning", message: `part '${comp.ref}': per-instance pins are ignored; using template '${def.name}'`, line: 0, col: 0 });
+      diagnostics.push({ severity: "warning", message: `part '${comp.ref}': per-instance pins are ignored; using template '${def.name}'`, line: comp.line ?? 0, col: comp.col ?? 0 });
     }
     // template name (without namespace prefix) is the default label
     comp.value = comp.value ?? def.value ?? def.name.split(".").pop();
@@ -492,7 +514,7 @@ function parseNet(keyword: string, ts: TokenStream, schematic: Schematic, err: E
       else members.push({ ref: r, pin });
     }
   }
-  schematic.nets.push({ name: nameTok.v, kind, attrs, members });
+  schematic.nets.push({ name: nameTok.v, kind, attrs, members, line: nameTok.line, col: nameTok.col });
 }
 
 function parseWire(ts: TokenStream, schematic: Schematic, err: Err, n: number): void {
@@ -512,14 +534,8 @@ function parseWire(ts: TokenStream, schematic: Schematic, err: Err, n: number): 
   const ma = parseRef(a);
   const mb = parseRef(b);
   if (!ma || !mb) return;
-  schematic.nets.push({
-    name: `_w${n}`,
-    kind: "signal",
-    attrs: {},
-    members: [ma, mb],
-    synthetic: true,
-    directed: op.v === "->",
-  });
+  // `--` and `->` are equivalent: the edge already carries an a→b direction.
+  schematic.nets.push({ name: `_w${n}`, kind: "signal", attrs: {}, members: [ma, mb], synthetic: true, line: a.line, col: a.col });
 }
 
 function parseHint(keyword: string, ts: TokenStream, schematic: Schematic, err: Err): void {
@@ -573,12 +589,14 @@ function parseDirective(keyword: "title" | "theme", ts: TokenStream, schematic: 
   else schematic.theme = t.v;
 }
 
-function parseSet(ts: TokenStream, schematic: Schematic): void {
+function parseSet(ts: TokenStream, schematic: Schematic, warn: Err): void {
   while (ts.peek() && !ts.atStatementBoundary()) {
     const t = ts.next()!;
     if (t.v.includes("=")) {
       const [k, v] = splitFirst(t.v, "=");
       schematic.settings[k] = v ?? "";
+    } else {
+      warn(`set: ignored '${t.v}' (expected key=value)`, t);
     }
   }
 }

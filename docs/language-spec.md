@@ -236,13 +236,14 @@ Each member gets a ground symbol. Not routed.
 ### 5.4 Point-to-point wires
 
 ```elmo-src
-wire U1.RX -- J1.TX      # neutral connection
-wire U1.TX -> J1.RX      # same, plus a signal-flow hint to the router
+wire U1.RX -- J1.TX      # canonical
+wire U1.TX -> J1.RX      # accepted alias, identical result
 ```
 
-Sugar for a two-member signal net. `--` is the canonical operator; `->` is an
-accepted alias that additionally hints signal-flow direction to the layout router.
-The arrow is a layout hint only — it never changes connectivity.
+Sugar for a two-member signal net. `--` is the canonical operator and `->` is an
+accepted alias — the two are equivalent (the routed edge already runs from the
+first pin to the second). `->` neither draws an arrowhead nor changes
+connectivity.
 
 ### 5.5 Pin references
 
@@ -483,7 +484,7 @@ All settled for v0.1-final.
 6. **Transistor pins** — named pins canonical (`C/B/E`, `G/D/S`), numeric aliases from the symbol def.
 7. **Hierarchy / sheets** — **deferred.** v1 is single-sheet.
 8. **Multiple grounds** — lightweight `gnd AGND sym=analog` form; no separate registry.
-9. **Wire operator** — `--` canonical, `->` an alias adding a signal-flow hint (§5.4).
+9. **Wire operator** — `--` canonical, `->` an equivalent accepted alias (§5.4).
 10. **Connector auto-numbering** — column-major for multi-row headers (§4.1).
 11. **Label vs value** — one positional `value` field; explicit `name=`/`value=` attrs for the rare both-needed case (§4).
 12. **Net-name scope** — global merge, KiCad semantics; linter warns on single-member nets (§5.6).

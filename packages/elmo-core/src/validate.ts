@@ -1,17 +1,12 @@
 // Semantic checks (spec §11). Errors block rendering; warnings are advisory.
-// Note: nets don't carry source positions in the IR yet, so net-level
-// diagnostics report line 0 for M1 (precise spans arrive with M4 error work).
+// Nets, defs, and components carry source positions, so diagnostics point at the
+// offending line where available.
 
-import type { Component, Diagnostic, Pin, Schematic } from "./types.js";
-import { connectedPinIds, keptDespiteHidden } from "./pins.js";
+import type { Diagnostic, Schematic } from "./types.js";
+import { connectedPinIds, keptDespiteHidden, matchPins } from "./pins.js";
 import { KINDS, resolveKind } from "./kinds.js";
 
-function matchPin(comp: Component, token: string): Pin[] {
-  const exact = comp.pins.filter(
-    (p) => p.number === token || p.id === token || p.name === token || p.aliases?.includes(token),
-  );
-  return exact;
-}
+const at = (x: { line?: number; col?: number }): { line: number; col: number } => ({ line: x.line ?? 0, col: x.col ?? 0 });
 
 export function validate(schematic: Schematic): Diagnostic[] {
   const diags: Diagnostic[] = [];
@@ -23,24 +18,18 @@ export function validate(schematic: Schematic): Diagnostic[] {
     for (const m of net.members) {
       const comp = byRef.get(m.ref);
       if (!comp) {
-        diags.push({ severity: "error", message: `${label}: unknown component '${m.ref}'`, line: 0, col: 0 });
+        diags.push({ severity: "error", message: `${label}: unknown component '${m.ref}'`, ...at(net) });
         continue;
       }
       referenced.add(comp.ref);
-      const matches = matchPin(comp, m.pin);
+      const matches = matchPins(comp, m.pin);
       if (matches.length === 0) {
-        diags.push({
-          severity: "error",
-          message: `${label}: '${m.ref}' has no pin '${m.pin}'`,
-          line: 0,
-          col: 0,
-        });
+        diags.push({ severity: "error", message: `${label}: '${m.ref}' has no pin '${m.pin}'`, ...at(net) });
       } else if (matches.length > 1) {
         diags.push({
           severity: "warning",
           message: `${label}: pin '${m.pin}' is ambiguous on '${m.ref}' — reference it by number`,
-          line: 0,
-          col: 0,
+          ...at(net),
         });
       }
     }
@@ -49,20 +38,14 @@ export function validate(schematic: Schematic): Diagnostic[] {
       diags.push({
         severity: "warning",
         message: `net '${net.name}' has a single member — likely a typo'd name that failed to merge`,
-        line: 0,
-        col: 0,
+        ...at(net),
       });
     }
   }
 
   for (const comp of schematic.components) {
     if (!referenced.has(comp.ref)) {
-      diags.push({
-        severity: "warning",
-        message: `component '${comp.ref}' is not connected to any net`,
-        line: 0,
-        col: 0,
-      });
+      diags.push({ severity: "warning", message: `component '${comp.ref}' is not connected to any net`, ...at(comp) });
     }
     // by now template instances are resolved to a base kind; anything not a
     // built-in is an unknown kind or an out-of-scope/typo'd template
@@ -70,8 +53,7 @@ export function validate(schematic: Schematic): Diagnostic[] {
       diags.push({
         severity: "warning",
         message: `component '${comp.ref}': unknown kind '${comp.kind}' — rendered as a plain box (missing a def or import?)`,
-        line: 0,
-        col: 0,
+        ...at(comp),
       });
     }
   }
@@ -80,12 +62,7 @@ export function validate(schematic: Schematic): Diagnostic[] {
   const connected = connectedPinIds(schematic);
   for (const comp of schematic.components) {
     for (const pin of keptDespiteHidden(comp, connected.get(comp.ref) ?? new Set())) {
-      diags.push({
-        severity: "warning",
-        message: `pin '${pin.name}' on '${comp.ref}' is used by a net — not hidden`,
-        line: 0,
-        col: 0,
-      });
+      diags.push({ severity: "warning", message: `pin '${pin.name}' on '${comp.ref}' is used by a net — not hidden`, ...at(comp) });
     }
   }
 

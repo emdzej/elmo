@@ -10,6 +10,8 @@ export { renderSchematic, type RenderOptions } from "./render.js";
 export { KINDS, isKnownKind, resolveKind } from "./kinds.js";
 export { normalizeNets } from "./normalize.js";
 export { mapResolver } from "./resolvers.js";
+export { escapeHtml, safeHref } from "./util.js";
+export { matchPin, matchPins, pinMatches } from "./pins.js";
 export {
   netlist,
   netlistToText,

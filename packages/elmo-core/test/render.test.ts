@@ -36,6 +36,14 @@ describe("render", () => {
     expect(warnings.some((w) => w.message.includes("NE555"))).toBe(true);
   });
 
+  it("reports net diagnostics at the offending source line (not line 0)", () => {
+    const src = "part R1 res 10k\npart R2 res 10k\n\nnet bad = R1.9 R2.1";
+    const errs = validate(parse(src).schematic).filter((d) => d.severity === "error");
+    const e = errs.find((d) => d.message.includes("no pin"))!;
+    expect(e.line).toBe(4); // the `net bad` line
+    expect(e.col).toBeGreaterThan(0);
+  });
+
   it("warns on a single-member net", () => {
     const { schematic } = parse("part R1 res 10k\nnet lonely = R1.1");
     const warnings = validate(schematic).filter((d) => d.severity === "warning");
@@ -118,6 +126,25 @@ describe("render", () => {
     expect(a).toContain('<a href="http://foo.bar" target="_blank"');
     const b = (await render('part U1 ic { right 1:o } link=http://x.y')).svg;
     expect(b).toContain('<a href="http://x.y"');
+  });
+
+  it("rejects unsafe link schemes (no javascript:/data: href, no <a>)", async () => {
+    for (const bad of ["javascript:alert(1)", "data:text/html,<script>", "vbscript:x"]) {
+      const { svg } = await render(`part R1 res 10k link="${bad}"`);
+      expect(svg).not.toContain("<a ");
+      expect(svg).not.toContain(bad);
+    }
+    // relative and mailto links are allowed
+    expect((await render('part R1 res 10k link="./ds.pdf"')).svg).toContain('<a href="./ds.pdf"');
+    expect((await render('part R1 res 10k link="mailto:a@b.co"')).svg).toContain("mailto:a@b.co");
+  });
+
+  it("warns (not errors) on a malformed `set` token", async () => {
+    const { schematic, diagnostics } = parse("set foo\npart R1 res 1k");
+    const all = [...diagnostics];
+    expect(all.some((d) => d.severity === "warning" && d.message.includes("set:"))).toBe(true);
+    expect(all.some((d) => d.severity === "error")).toBe(false);
+    expect(schematic.components).toHaveLength(1); // still parses the rest
   });
 
   it("honours a `place right-of` hint", async () => {

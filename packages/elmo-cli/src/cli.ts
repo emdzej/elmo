@@ -3,6 +3,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve as resolvePath } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import chalk from "chalk";
 import {
@@ -20,13 +21,29 @@ import {
 
 const read = (file: string): string => readFileSync(file, "utf8");
 
-// resolve `import "…"` relative to the importing file
+// version from package.json so it can't drift from a hardcoded literal
+const pkgVersion = (): string => {
+  try {
+    const url = new URL("../package.json", import.meta.url);
+    return JSON.parse(readFileSync(fileURLToPath(url), "utf8")).version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+};
+
+// Resolve `import "…"` relative to the importing file. Trust boundary: this is a
+// local CLI run on the user's own files, so there is deliberately no confinement
+// to a project root. Do NOT reuse this resolver as-is in a server that renders
+// untrusted input — confine it to an allowed root first (see AGENTS.md).
 const fsResolver: ImportResolver = (spec, fromPath) => {
   const path = resolvePath(fromPath ? dirname(fromPath) : process.cwd(), spec);
   try {
     return { path, source: readFileSync(path, "utf8") };
-  } catch {
-    return null;
+  } catch (err) {
+    // a genuine missing file → let the parser report "cannot resolve import";
+    // any other IO error (permissions, is-a-directory, …) should surface
+    if ((err as NodeJS.ErrnoException)?.code === "ENOENT") return null;
+    throw new Error(`reading import '${spec}' (${path}): ${err instanceof Error ? err.message : String(err)}`);
   }
 };
 const abs = (file: string): string => resolvePath(process.cwd(), file);
@@ -50,7 +67,7 @@ function fail(err: unknown): never {
 }
 
 const program = new Command();
-program.name("elmo").description("elmo — electronics modeling, schematics as code").version("0.0.1");
+program.name("elmo").description("elmo — electronics modeling, schematics as code").version(pkgVersion());
 
 program
   .command("render <file>")

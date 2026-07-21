@@ -24,6 +24,8 @@ export interface Component {
   pins: Pin[];
   rotation?: 0 | 90 | 180 | 270; // from a `rotate` hint
   mirror?: boolean; // from a `mirror` hint
+  line?: number; // source position of the declaration (for diagnostics)
+  col?: number;
 }
 
 export type NetKind = "signal" | "power" | "gnd";
@@ -40,8 +42,8 @@ export interface Net {
   members: NetMember[];
   /** Synthesized from a `wire` statement rather than a named `net`. */
   synthetic?: boolean;
-  /** `->` flow hint from a wire statement. */
-  directed?: boolean;
+  line?: number; // source position of the statement (for diagnostics)
+  col?: number;
 }
 
 export type Hint =
@@ -59,6 +61,8 @@ export interface Def {
   value?: string;
   attrs: Record<string, string>;
   pins: Pin[];
+  line?: number;
+  col?: number;
 }
 
 export interface ImportDecl {
@@ -89,6 +93,8 @@ export interface ParseOptions {
   path?: string; // path of the file being parsed (base for relative imports)
   /** @internal cycle-detection stack of canonical paths */
   _stack?: Set<string>;
+  /** @internal per-run parse cache keyed by canonical path (memoizes re-imports) */
+  _cache?: Map<string, Schematic>;
 }
 
 export type Severity = "error" | "warning";

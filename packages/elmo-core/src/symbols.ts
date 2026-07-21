@@ -6,9 +6,8 @@
 // the grid layout; connection-aware auto-rotation is M3. Everything is stroked
 // with currentColor-driven classes defined in render.ts.
 
-import type { PlacedComponent, PlacedPin, Vec } from "./layout.js";
-
-const n = (x: number): string => (Math.round(x * 100) / 100).toString();
+import type { PlacedComponent, PlacedPin } from "./layout.js";
+import { round2 as n, norm, lerp, neg, escapeHtml, type Vec } from "./util.js";
 
 function L(a: Vec, b: Vec, cls = "elmo-pin"): string {
   return `<line class="${cls}" x1="${n(a.x)}" y1="${n(a.y)}" x2="${n(b.x)}" y2="${n(b.y)}"/>`;
@@ -26,7 +25,7 @@ function rect(x: number, y: number, w: number, h: number, rx = 0, cls = "elmo-sy
   return `<rect class="${cls}" x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}" rx="${n(rx)}"/>`;
 }
 function txt(s: string, x: number, y: number): string {
-  return `<text class="elmo-symtext" x="${n(x)}" y="${n(y)}" text-anchor="middle">${s}</text>`;
+  return `<text class="elmo-symtext" x="${n(x)}" y="${n(y)}" text-anchor="middle">${escapeHtml(s)}</text>`;
 }
 /** Filled arrowhead with its tip at `tip`, pointing along unit vector `dir`. */
 function arrow(tip: Vec, dir: Vec, size = 5): string {
@@ -36,13 +35,6 @@ function arrow(tip: Vec, dir: Vec, size = 5): string {
   const c2 = { x: b.x - pe.x * size * 0.6, y: b.y - pe.y * size * 0.6 };
   return P(`M ${n(tip.x)},${n(tip.y)} L ${n(c1.x)},${n(c1.y)} L ${n(c2.x)},${n(c2.y)} Z`, "elmo-sym-fill");
 }
-
-const norm = (v: Vec): Vec => {
-  const m = Math.hypot(v.x, v.y) || 1;
-  return { x: v.x / m, y: v.y / m };
-};
-const lerp = (a: Vec, b: Vec, t: number): Vec => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
-const neg = (v: Vec): Vec => ({ x: -v.x, y: -v.y });
 
 function sidep(pc: PlacedComponent, side: string): PlacedPin | undefined {
   return pc.pins.find((p) => p.pin.side === side);

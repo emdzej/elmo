@@ -66,9 +66,8 @@ describe("parse", () => {
     expect(kinds.n_thres).toBe("signal");
   });
 
-  it("parses a wire into a synthetic directed net", () => {
+  it("parses a wire into a synthetic 2-member net", () => {
     const w = schematic.nets.find((n) => n.synthetic)!;
-    expect(w.directed).toBe(true);
     expect(w.members).toEqual([
       { ref: "U1", pin: "OUT" },
       { ref: "R1", pin: "1" },

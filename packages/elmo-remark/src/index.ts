@@ -16,7 +16,7 @@
 // elmo's layout is async; remark transformers may be async, so each elmo code
 // node is replaced in place with an mdast `html` node holding the rendered SVG.
 
-import { render, mapResolver, type ImportResolver } from "@emdzej/elmo-core";
+import { render, mapResolver, escapeHtml, type ImportResolver } from "@emdzej/elmo-core";
 import { visit } from "unist-util-visit";
 import type { Code, Html, Root } from "mdast";
 
@@ -26,9 +26,6 @@ export interface RemarkElmoOptions {
   resolve?: ImportResolver; // resolve `import` statements
   files?: Record<string, string>; // virtual file map (sugar for a mapResolver)
 }
-
-const escapeHtml = (s: string): string =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export default function remarkElmo(options: RemarkElmoOptions = {}) {
   const language = options.language ?? "elmo";

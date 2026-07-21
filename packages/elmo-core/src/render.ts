@@ -7,11 +7,12 @@
 // a labeled box with pin stubs.
 
 import type { Net, Schematic } from "./types.js";
-import { layoutSchematic, placePins, resolvePin, sizeOf, type Layout, type PlacedComponent, type PlacedPin, type Vec } from "./layout.js";
+import { layoutSchematic, placePins, resolvePin, sizeOf, type Layout, type PlacedComponent, type PlacedPin } from "./layout.js";
 import { netMode, labelThreshold } from "./nets.js";
 import { normalizeNets } from "./normalize.js";
 import { KINDS } from "./kinds.js";
 import { SYMBOLS } from "./symbols.js";
+import { escapeHtml, safeHref, round2 as n, add, scale, perp, CHAR, type Vec } from "./util.js";
 
 export interface RenderOptions {
   /** Emitted as the root <svg> class; drives theming. Default "elmo". */
@@ -23,33 +24,26 @@ export interface RenderOptions {
   labelThreshold?: number;
 }
 
-const esc = (s: string): string =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-const n = (x: number): string => (Math.round(x * 100) / 100).toString();
-
 function anchorFor(d: Vec): "start" | "end" | "middle" {
   if (d.x > 0.5) return "start";
   if (d.x < -0.5) return "end";
   return "middle";
 }
 
-const add = (a: Vec, b: Vec): Vec => ({ x: a.x + b.x, y: a.y + b.y });
-const scale = (v: Vec, k: number): Vec => ({ x: v.x * k, y: v.y * k });
-const perp = (d: Vec): Vec => ({ x: -d.y, y: d.x });
-
 function line(a: Vec, b: Vec, cls = "elmo-wire"): string {
   return `<line class="${cls}" x1="${n(a.x)}" y1="${n(a.y)}" x2="${n(b.x)}" y2="${n(b.y)}"/>`;
 }
 
 function text(s: string, p: Vec, cls: string, anchor: string): string {
-  return `<text class="${cls}" x="${n(p.x)}" y="${n(p.y)}" text-anchor="${anchor}" dominant-baseline="middle">${esc(s)}</text>`;
+  return `<text class="${cls}" x="${n(p.x)}" y="${n(p.y)}" text-anchor="${anchor}" dominant-baseline="middle">${escapeHtml(s)}</text>`;
 }
 
-/** Wrap the ref label in an SVG hyperlink when the part has a `link=` attribute. */
+/** Wrap the ref label in an SVG hyperlink when the part has a safe `link=` attribute.
+ * Unsafe schemes (javascript:, data:, …) are rejected — untrusted `.elmo` can be
+ * rendered inline. */
 function linkWrap(attrs: Record<string, string>, inner: string): string {
-  const href = attrs.link;
-  return href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${inner}</a>` : inner;
+  const href = attrs.link ? safeHref(attrs.link) : null;
+  return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${inner}</a>` : inner;
 }
 
 function hAnchor(dir: Vec, pos: "in" | "out"): string {
@@ -95,7 +89,7 @@ function renderComponent(pc: PlacedComponent): string {
     geometry = `<rect class="elmo-body" x="0" y="0" width="${n(w)}" height="${n(h)}" rx="3"/>`;
     const ly = pc.y - (hasTopVis ? 48 : 8);
     world.push(linkWrap(pc.comp.attrs, text(pc.comp.ref, { x: pc.x, y: ly }, "elmo-ref", "start")));
-    if (pc.comp.value) world.push(text(pc.comp.value, { x: pc.x + pc.comp.ref.length * 8 + 6, y: ly }, "elmo-value", "start"));
+    if (pc.comp.value) world.push(text(pc.comp.value, { x: pc.x + pc.comp.ref.length * (CHAR + 1) + 6, y: ly }, "elmo-value", "start"));
     for (const pp of pc.pins) {
       world.push(line(pp.edge, pp.stub, "elmo-pin"));
       world.push(text(pp.pin.name, add(pp.edge, scale(pp.dir, -5)), "elmo-pinname", hAnchor(pp.dir, "in")));

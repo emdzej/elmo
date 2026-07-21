@@ -69,6 +69,22 @@ pnpm docs:dev    # VitePress dev server with live diagrams
   alone do not catch layout regressions.
 - Match the surrounding code style; TypeScript is `strict`.
 
+## Security & trust boundary
+
+elmo renders potentially untrusted `.elmo` source to SVG that is inlined into a
+page (playground, browser bundle, Markdown plugins). Two rules keep that safe:
+
+- **URLs are sanitized.** The `link=` attribute goes through `safeHref` in
+  `util.ts` (allowlist: http/https/mailto + relative/fragment). Any new place
+  that emits a URL into output must reuse it. `escapeHtml` (also in `util.ts`) is
+  the single escaper — don't hand-roll another.
+- **Import resolvers are a trust boundary.** A resolver can read arbitrary
+  content (the CLI's fs resolver has no root confinement — fine for a local
+  tool). If you ever wire an fs-backed resolver into a **server** that renders
+  untrusted input, confine resolution to an allowed root and cap parse/layout
+  work (component/net counts, source size, import depth) — the core sets no such
+  limits today.
+
 ## Adding a new symbol (common task)
 
 1. Add the kind (and any pin definition/alias) in `kinds.ts`.

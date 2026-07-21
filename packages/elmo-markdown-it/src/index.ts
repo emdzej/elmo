@@ -12,7 +12,7 @@
 //
 // A plain md.render() without the pre-pass emits a graceful placeholder.
 
-import { render, mapResolver, type ImportResolver } from "@emdzej/elmo-core";
+import { render, mapResolver, escapeHtml, type ImportResolver } from "@emdzej/elmo-core";
 import type MarkdownIt from "markdown-it";
 
 export interface ElmoPluginOptions {
@@ -24,9 +24,6 @@ interface ElmoEnv {
   elmoSvgs?: Map<string, string>;
   elmoErrors?: Map<string, string>;
 }
-
-const escapeHtml = (s: string): string =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const fenceLang = (info: string): string => info.trim().split(/\s+/)[0] ?? "";
 

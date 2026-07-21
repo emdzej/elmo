@@ -113,7 +113,8 @@ without it, diagrams follow the viewer's light/dark preference. `rotate R1 90`,
 
 ```bash
 pnpm install
-pnpm build       # build all packages (topological)
+pnpm build       # Turborepo: build all packages (topological, cached)
+pnpm typecheck   # Turborepo: tsc --noEmit per package
 pnpm test        # vitest
 pnpm lint:md     # markdownlint docs
 pnpm docs:dev    # VitePress docs site (live diagrams)

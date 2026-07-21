@@ -8,7 +8,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --format=iife --global-name=elmo --minify --platform=browser --outfile=dist/elmo.min.js"
+    "build": "esbuild src/index.ts --bundle --format=iife --global-name=elmo --minify --platform=browser --outfile=dist/elmo.min.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@emdzej/elmo-core": "workspace:*"

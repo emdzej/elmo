@@ -41,11 +41,15 @@ This is a pnpm workspace. Packages live under `packages/`:
 
 ```bash
 pnpm install
-pnpm build       # build all packages (topological)
+pnpm build       # Turborepo: build all packages (topological, cached)
+pnpm typecheck   # Turborepo: tsc --noEmit per package
 pnpm test        # vitest — keep this green
 pnpm lint:md     # markdownlint — keep this at 0 errors
 pnpm docs:dev    # VitePress dev server with live diagrams
 ```
+
+`build`/`typecheck` run through **Turborepo** (`turbo.json`); the cache lives in
+`.turbo/`. `test` and `lint:md` are still plain root scripts.
 
 ## Conventions (please follow)
 

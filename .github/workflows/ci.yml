@@ -15,8 +15,15 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      # persist Turborepo's cache across runs
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm lint:md
       - run: pnpm docs:build

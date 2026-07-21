@@ -283,6 +283,25 @@ are **opaque pass-through metadata**: stored in the IR, never read by the layout
 render pipeline, available to future exporters (netlist/BOM/PCB). Unknown attrs are
 kept, not rejected.
 
+### 7.1 Reserved attributes
+
+A few attribute keys are read by the pipeline rather than passed through:
+
+| Attribute | Effect |
+| --- | --- |
+| `link="uri"` | Renders the component's ref (e.g. `U1`) as a hyperlink to `uri` — a datasheet, BOM entry, or wiki page. Wherever a renderer supports links (SVG `<a>`), the ref becomes clickable. |
+| `pol=yes` | On a `cap`, selects the polarized capacitor symbol. |
+| `sym=...` | On a `gnd` net, selects an alternate ground symbol (e.g. `sym=analog`). |
+| `as=wire\|label` | On a `net`, forces routed wire or net labels regardless of fan-out (§5.1). |
+
+```elmo
+part U1 ic "ATmega328P" pkg=DIP-28 link="https://ww1.microchip.com/…/ATmega328P.pdf" {
+  left 1:PC6 right 28:PC5
+}
+```
+
+All other attributes remain opaque metadata.
+
 ## 8. Built-in symbol kinds
 
 The `kind` token is open — the parser accepts any identifier and an unknown kind
